@@ -1,0 +1,15 @@
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts (General)
+out/
+dist/
+build/
+bin/
