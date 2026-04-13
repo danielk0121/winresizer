@@ -1,5 +1,5 @@
 import unittest
-from app.src.coordinate_calculator import calculate_window_position
+from coordinate_calculator import calculate_window_position
 
 class TestCoordinateCalculator(unittest.TestCase):
     def test_calculate_left_half(self):

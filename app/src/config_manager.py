@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 CONFIG_FILE = os.path.join("config", "config.json")
 
@@ -61,7 +62,7 @@ def load_config():
                     config_data['settings'].update(loaded['settings'])
                 return config_data
         except Exception as e:
-            print(f"설정 파일을 불러오는 중 오류 발생: {e}")
+            logging.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
     return config_data
 
 def save_config(config):
@@ -70,5 +71,6 @@ def save_config(config):
     try:
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
+        logging.debug(f"설정 파일 저장 성공: {CONFIG_FILE}")
     except Exception as e:
-        print(f"설정 저장 중 오류 발생: {e}")
+        logging.error(f"설정 저장 중 오류 발생: {e}")
