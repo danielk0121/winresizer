@@ -1,6 +1,5 @@
 import sys
-from AppKit import NSWorkspace, NSWorkspaceDidActivateApplicationNotification
-from Foundation import NSObject
+from AppKit import NSWorkspace
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QCheckBox, QFrame, QSpacerItem, QSizePolicy, QScrollArea
@@ -30,10 +29,15 @@ def find_monitor(bounds, monitors):
 def apply_gap(x, y, w, h, gap):
     return (x+gap, y+gap, w-2*gap, h-2*gap)
 
-def execute_window_command(mode, target_window=None):
+def execute_window_command(mode):
+    # 윈도우 제외 리스트(Ignore List) 확인
+    active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
+    if active_app and active_app.localizedName() in SETTINGS.get('ignore_apps', []):
+        print(f"[무시] {active_app.localizedName()} 앱에서는 단축키가 작동하지 않습니다.")
+        return
+
     monitors = get_all_monitors_info(); if not monitors: return
-    target_window = target_window or get_active_window_object()
-    if not target_window: return
+    target_window = get_active_window_object(); if not target_window: return
     current_bounds = get_window_bounds(target_window); if not current_bounds: return
     
     win_id, gap = hash(target_window), SETTINGS.get('gap', 0)
@@ -69,8 +73,6 @@ def execute_window_command(mode, target_window=None):
 class AppObserver(QThread):
     def run(self):
         ws = NSWorkspace.sharedWorkspace()
-        nc = ws.notificationCenter()
-        # macOS 알림은 메인 루프가 필요하므로 주기적으로 활성 앱을 체크하는 간단한 방식 채택
         self.last_app = None
         while True:
             active_app = ws.frontmostApplication()
@@ -78,9 +80,7 @@ class AppObserver(QThread):
                 self.last_app = active_app.localizedName()
                 auto_layouts = SETTINGS.get('auto_layouts', {})
                 if self.last_app in auto_layouts:
-                    mode = auto_layouts[self.last_app]
-                    # GUI 스레드와의 경합 방지를 위해 약간의 지연 후 실행
-                    QTimer.singleShot(200, lambda m=mode: execute_window_command(m))
+                    QTimer.singleShot(200, lambda m=auto_layouts[self.last_app]: execute_window_command(m))
             self.msleep(500)
 
 class HotkeyListenerThread(QThread):

@@ -31,7 +31,8 @@ DEFAULT_SETTINGS = {
     'auto_layouts': {
         'Slack': '우측_1/3',
         'iTerm2': '좌측_2/3'
-    }
+    },
+    'ignore_apps': ['Photoshop', 'Final Cut Pro', 'Steam']
 }
 
 def load_config():
