@@ -157,7 +157,7 @@ class WinResizerPreferences(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("WinResizer 설정"); self.setMinimumSize(450, 850); self.setStyleSheet("background-color: #2b2b2b; color: white;")
+        self.setWindowTitle("WinResizer 설정"); self.setMinimumSize(570, 1120); self.setStyleSheet("background-color: #2b2b2b; color: white;")
         layout = QVBoxLayout(self)
         
         # 간격 설정
