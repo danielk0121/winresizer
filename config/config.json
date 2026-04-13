@@ -1,28 +1,28 @@
 {
     "shortcuts": {
         "왼쪽": {
-            "pynput": "<ctrl>+<alt>+5",
-            "display": "CTRLALT5",
+            "pynput": "<ctrl>+<alt>+<left>",
+            "display": "CTRLALTLEFT",
             "mode": "좌측_절반"
         },
         "오른쪽": {
-            "pynput": "<ctrl>+<alt>+<cmd>+<right>",
-            "display": "⌃⌥⌘→",
+            "pynput": "<ctrl>+<alt>+<right>",
+            "display": "CTRLALTRIGHT",
             "mode": "우측_절반"
         },
         "위": {
-            "pynput": "<ctrl>+<alt>+<cmd>+<up>",
-            "display": "⌃⌥⌘↑",
+            "pynput": "<ctrl>+<alt>+<up>",
+            "display": "CTRLALTUP",
             "mode": "위쪽_절반"
         },
         "아래": {
-            "pynput": "<ctrl>+<alt>+<cmd>+<down>",
-            "display": "⌃⌥⌘↓",
+            "pynput": "<ctrl>+<alt>+<down>",
+            "display": "CTRLALTDOWN",
             "mode": "아래쪽_절반"
         },
         "좌상단 1/4": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<ctrl>+<alt>+<cmd>+<left>",
+            "display": "CTRLALTCMDLEFT",
             "mode": "좌상단_1/4"
         },
         "우상단 1/4": {
@@ -41,8 +41,8 @@
             "mode": "우하단_1/4"
         },
         "좌측 1/3": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<ctrl>+<alt>+<left>",
+            "display": "CTRLALTLEFT",
             "mode": "좌측_1/3"
         },
         "중앙 1/3": {
@@ -51,8 +51,8 @@
             "mode": "중앙_1/3"
         },
         "우측 1/3": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<ctrl>+<alt>+<right>",
+            "display": "CTRLALTRIGHT",
             "mode": "우측_1/3"
         },
         "좌측 2/3": {
@@ -65,25 +65,10 @@
             "display": "단축키 입력",
             "mode": "우측_2/3"
         },
-        "중앙": {
-            "pynput": "<ctrl>+<alt>+<cmd>+c",
-            "display": "⌃⌥⌘C",
-            "mode": "중앙_고정"
-        },
         "최대화": {
             "pynput": "",
             "display": "단축키 입력",
             "mode": "최대화"
-        },
-        "다음 디스플레이": {
-            "pynput": "",
-            "display": "단축키 입력",
-            "mode": "다음_디스플레이"
-        },
-        "이전 디스플레이": {
-            "pynput": "",
-            "display": "단축키 입력",
-            "mode": "이전_디스플레이"
         },
         "복구": {
             "pynput": "",
@@ -94,15 +79,13 @@
     "settings": {
         "gap": 5,
         "login_launch": true,
-        "center_size": {
-            "width": 1200,
-            "height": 800
-        },
         "auto_layouts": {
             "Slack": "우측_1/3",
             "iTerm2": "좌측_2/3"
         },
         "ignore_apps": [
+            "Photoshop",
+            "Final Cut Pro",
             "Steam"
         ]
     }
