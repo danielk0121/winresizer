@@ -10,28 +10,57 @@ from PyQt5.QtGui import QFont
 from pynput import keyboard
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds, is_accessibility_trusted
+from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
 from app.src.config_manager import load_config, save_config
 
 # 설정 불러오기
 HOTKEY_CONFIG = load_config()
 
+def is_nearly_equal(bounds1, bounds2, tolerance=2):
+    """두 좌표값이 오차 범위 내에서 일치하는지 확인"""
+    if not bounds1 or not bounds2: return False
+    return all(abs(a - b) <= tolerance for a, b in zip(bounds1, bounds2))
+
 def execute_window_command(mode):
-    """실제 창 조절 로직 실행"""
+    """실제 창 조절 로직 실행 (스마트 순환 기능 포함)"""
     monitors = get_all_monitors_info()
     if not monitors: return
     
-    main_monitor = monitors[0] 
+    main_monitor = monitors[0] # 첫 번째 모니터 기준
     screen_size = (main_monitor['width'], main_monitor['height'])
     
-    x, y, width, height = calculate_window_position(screen_size, mode)
+    target_window = get_active_window_object()
+    if not target_window: return
+    
+    current_bounds = get_window_bounds(target_window)
+    # 모니터 오프셋 보정하여 로컬 좌표로 변환
+    if current_bounds:
+        current_bounds = (
+            current_bounds[0] - main_monitor['x'],
+            current_bounds[1] - main_monitor['y'],
+            current_bounds[2],
+            current_bounds[3]
+        )
+
+    # 순환 로직 정의
+    next_mode = mode
+    if mode == "좌측_절반":
+        if is_nearly_equal(current_bounds, calculate_window_position(screen_size, "좌측_절반")):
+            next_mode = "좌측_1/3"
+        elif is_nearly_equal(current_bounds, calculate_window_position(screen_size, "좌측_1/3")):
+            next_mode = "좌측_2/3"
+    elif mode == "우측_절반":
+        if is_nearly_equal(current_bounds, calculate_window_position(screen_size, "우측_절반")):
+            next_mode = "우측_1/3"
+        elif is_nearly_equal(current_bounds, calculate_window_position(screen_size, "우측_1/3")):
+            next_mode = "우측_2/3"
+
+    x, y, width, height = calculate_window_position(screen_size, next_mode)
     x += main_monitor['x']
     y += main_monitor['y']
 
-    target_window = get_active_window_object()
-    if target_window:
-        set_window_bounds(target_window, x, y, width, height)
-        print(f"[{mode}] 창 크기 조정 완료")
+    set_window_bounds(target_window, x, y, width, height)
+    print(f"[{next_mode}] 창 크기 조정 완료")
 
 class HotkeyListenerThread(QThread):
     """단축키 리스너를 관리하는 스레드"""

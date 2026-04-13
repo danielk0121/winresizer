@@ -4,6 +4,7 @@ from ApplicationServices import (
     AXUIElementCopyAttributeValue, 
     AXUIElementSetAttributeValue,
     AXValueCreate,
+    AXValueGetValue,
     AXIsProcessTrusted,
     kAXFocusedWindowAttribute,
     kAXPositionAttribute,
@@ -11,7 +12,7 @@ from ApplicationServices import (
     kAXValueCGPointType,
     kAXValueCGSizeType
 )
-from Quartz.CoreGraphics import CGPointMake, CGSizeMake
+from Quartz.CoreGraphics import CGPointMake, CGSizeMake, CGPoint, CGSize
 
 def is_accessibility_trusted():
     """
@@ -35,6 +36,29 @@ def get_active_window_object():
         return window_object
     return None
 
+def get_window_bounds(window_object):
+    """
+    지정된 윈도우 객체의 현재 위치와 크기(x, y, w, h)를 반환합니다.
+    """
+    if not window_object:
+        return None
+        
+    # 1. 위치 가져오기
+    res_pos, ax_pos = AXUIElementCopyAttributeValue(window_object, kAXPositionAttribute, None)
+    if res_pos != 0: return None
+    
+    pos = CGPoint()
+    AXValueGetValue(ax_pos, kAXValueCGPointType, pos)
+    
+    # 2. 크기 가져오기
+    res_size, ax_size = AXUIElementCopyAttributeValue(window_object, kAXSizeAttribute, None)
+    if res_size != 0: return None
+    
+    size = CGSize()
+    AXValueGetValue(ax_size, kAXValueCGSizeType, size)
+    
+    return (pos.x, pos.y, size.width, size.height)
+
 def set_window_bounds(window_object, x, y, width, height):
     """
     지정된 윈도우 객체의 위치와 크기를 변경합니다.
@@ -55,8 +79,6 @@ def set_window_bounds(window_object, x, y, width, height):
     # AXError 결과 확인 (0: kAXErrorSuccess)
     if res_pos != 0 or res_size != 0:
         print(f"경고: 창 제어 API 호출 실패 (위치 에러: {res_pos}, 크기 에러: {res_size})")
-        if res_pos in (-25204, -25205):
-            print("힌트: 시스템 설정에서 터미널의 '접근성(Accessibility)' 권한을 허용해 주세요.")
         return False
         
     return True
@@ -67,4 +89,4 @@ if __name__ == "__main__":
     else:
         target = get_active_window_object()
         if target:
-            set_window_bounds(target, 100, 100, 800, 600)
+            print(f"현재 창 정보: {get_window_bounds(target)}")
