@@ -21,8 +21,8 @@ def run_main():
         QMessageBox.information(None, "환영합니다!", "WinResizer가 처음 실행되었습니다.\n설정 창에서 단축키를 확인하고 필요한 경우 변경해주세요.")
     
     # 3. Main preferences window creation
+    app.setQuitOnLastWindowClosed(False)  # Keep app running when window is closed
     window = WinResizerPreferences()
-    window.show()
     
     # 4. Event loop start
     sys.exit(app.exec_())

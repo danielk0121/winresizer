@@ -4,9 +4,11 @@ import subprocess
 import ApplicationServices
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
+    QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox,
+    QSystemTrayIcon, QMenu, QAction, QStyle
 )
-from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QTimer, Qt
 from core.hotkey_listener import HotkeyListenerThread
 from core.window_controller import execute_window_command
 from ui.hotkey_button import HotkeyButton
@@ -137,9 +139,41 @@ class WinResizerPreferences(QWidget):
         clear_all_button.clicked.connect(self.clear_all_hotkeys)
         main_layout.addWidget(clear_all_button)
         
-        quit_button = QPushButton("Quit")
-        quit_button.clicked.connect(QApplication.instance().quit)
-        main_layout.addWidget(quit_button)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.hide)
+        main_layout.addWidget(close_button)
+        
+        # Setup system tray
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon("app/src/ui/tray_icon.png"))
+        
+        # Create tray menu
+        tray_menu = QMenu()
+        
+        pref_action = QAction("설정 (Preferences...)", self)
+        pref_action.triggered.connect(self.show_preferences)
+        tray_menu.addAction(pref_action)
+        
+        tray_menu.addSeparator()
+        
+        quit_action = QAction("종료 (Quit)", self)
+        quit_action.triggered.connect(self.quit_app)
+        tray_menu.addAction(quit_action)
+        
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
+
+    def quit_app(self):
+        QApplication.instance().quit()
+
+    def show_preferences(self):
+        self.show()
+        self.activateWindow()
+
+    def closeEvent(self, event):
+        """Override close event to hide window instead of exiting application."""
+        event.ignore()
+        self.hide()
 
     def on_gap_changed(self, value):
         if 'settings' not in self.current_config:
