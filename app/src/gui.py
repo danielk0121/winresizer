@@ -21,38 +21,82 @@ def is_nearly_equal(bounds1, bounds2, tolerance=2):
     if not bounds1 or not bounds2: return False
     return all(abs(a - b) <= tolerance for a, b in zip(bounds1, bounds2))
 
+def find_current_monitor_index(window_bounds, monitors):
+    """현재 창의 중심점이 속해 있는 모니터의 인덱스를 반환"""
+    if not window_bounds or not monitors: return 0
+    
+    # 창의 중심점 계산
+    cx = window_bounds[0] + window_bounds[2] // 2
+    cy = window_bounds[1] + window_bounds[3] // 2
+    
+    for i, m in enumerate(monitors):
+        if (m['x'] <= cx < m['x'] + m['width']) and \
+           (m['y'] <= cy < m['y'] + m['height']):
+            return i
+    return 0
+
 def execute_window_command(mode):
-    """실제 창 조절 로직 실행 (스마트 순환 기능 포함)"""
+    """실제 창 조절 로직 실행 (스마트 순환 및 디스플레이 이동 포함)"""
     monitors = get_all_monitors_info()
     if not monitors: return
-    
-    main_monitor = monitors[0] # 첫 번째 모니터 기준
-    screen_size = (main_monitor['width'], main_monitor['height'])
     
     target_window = get_active_window_object()
     if not target_window: return
     
     current_bounds = get_window_bounds(target_window)
-    # 모니터 오프셋 보정하여 로컬 좌표로 변환
-    if current_bounds:
-        current_bounds = (
-            current_bounds[0] - main_monitor['x'],
-            current_bounds[1] - main_monitor['y'],
-            current_bounds[2],
-            current_bounds[3]
-        )
+    if not current_bounds: return
 
-    # 순환 로직 정의
+    # 1. 디스플레이 이동 처리
+    if mode in ["다음_디스플레이", "이전_디스플레이"]:
+        curr_idx = find_current_monitor_index(current_bounds, monitors)
+        if mode == "다음_디스플레이":
+            next_idx = (curr_idx + 1) % len(monitors)
+        else:
+            next_idx = (curr_idx - 1) % len(monitors)
+            
+        if curr_idx == next_idx: return # 모니터가 하나인 경우
+        
+        curr_m = monitors[curr_idx]
+        next_m = monitors[next_idx]
+        
+        # 현재 모니터에서의 상대적 좌표 계산
+        rel_x = current_bounds[0] - curr_m['x']
+        rel_y = current_bounds[1] - curr_m['y']
+        
+        # 새 모니터로 이동 (상대적 위치 유지 시도)
+        new_x = next_m['x'] + rel_x
+        new_y = next_m['y'] + rel_y
+        new_w = min(current_bounds[2], next_m['width'])
+        new_h = min(current_bounds[3], next_m['height'])
+        
+        set_window_bounds(target_window, new_x, new_y, new_w, new_h)
+        print(f"[{mode}] 창을 디스플레이 {next_idx}로 이동 완료")
+        return
+
+    # 2. 일반 분할 모드 처리 (스마트 순환 포함)
+    curr_idx = find_current_monitor_index(current_bounds, monitors)
+    main_monitor = monitors[curr_idx]
+    screen_size = (main_monitor['width'], main_monitor['height'])
+    
+    # 모니터 오프셋 보정하여 로컬 좌표로 변환
+    local_bounds = (
+        current_bounds[0] - main_monitor['x'],
+        current_bounds[1] - main_monitor['y'],
+        current_bounds[2],
+        current_bounds[3]
+    )
+
     next_mode = mode
+    # 순환 로직
     if mode == "좌측_절반":
-        if is_nearly_equal(current_bounds, calculate_window_position(screen_size, "좌측_절반")):
+        if is_nearly_equal(local_bounds, calculate_window_position(screen_size, "좌측_절반")):
             next_mode = "좌측_1/3"
-        elif is_nearly_equal(current_bounds, calculate_window_position(screen_size, "좌측_1/3")):
+        elif is_nearly_equal(local_bounds, calculate_window_position(screen_size, "좌측_1/3")):
             next_mode = "좌측_2/3"
     elif mode == "우측_절반":
-        if is_nearly_equal(current_bounds, calculate_window_position(screen_size, "우측_절반")):
+        if is_nearly_equal(local_bounds, calculate_window_position(screen_size, "우측_절반")):
             next_mode = "우측_1/3"
-        elif is_nearly_equal(current_bounds, calculate_window_position(screen_size, "우측_1/3")):
+        elif is_nearly_equal(local_bounds, calculate_window_position(screen_size, "우측_1/3")):
             next_mode = "우측_2/3"
 
     x, y, width, height = calculate_window_position(screen_size, next_mode)
@@ -60,7 +104,7 @@ def execute_window_command(mode):
     y += main_monitor['y']
 
     set_window_bounds(target_window, x, y, width, height)
-    print(f"[{next_mode}] 창 크기 조정 완료")
+    print(f"[{next_mode}] 창 크기 조정 완료 (모니터 {curr_idx})")
 
 class HotkeyListenerThread(QThread):
     """단축키 리스너를 관리하는 스레드"""

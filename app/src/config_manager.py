@@ -19,6 +19,8 @@ DEFAULT_CONFIG = {
     '우측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_2/3'},
     '중앙': {'pynput': '<alt>+<cmd>+c', 'display': '⌥⌘C', 'mode': '중앙_고정'},
     '최대화': {'pynput': '', 'display': '단축키 입력', 'mode': '최대화'},
+    '다음 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '다음_디스플레이'},
+    '이전 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '이전_디스플레이'},
 }
 
 def load_config():
