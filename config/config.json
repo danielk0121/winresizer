@@ -1,8 +1,8 @@
 {
     "shortcuts": {
         "왼쪽": {
-            "pynput": "<ctrl>+<alt>+1",
-            "display": "⌃⌥1",
+            "pynput": "<ctrl>+<alt>+5",
+            "display": "CTRLALT5",
             "mode": "좌측_절반"
         },
         "오른쪽": {
