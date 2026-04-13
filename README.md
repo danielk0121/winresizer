@@ -38,19 +38,17 @@ pip install -r app/requirements.txt
 ```
 
 ### 2. 앱 실행
-가상 환경의 파이썬 인터프리터를 사용하여 실행합니다.
-
-#### GUI 설정 창 (메인)
-설정 창이 실행되면 백그라운드 리스너와 명령 서버가 함께 동작합니다.
+가상 환경의 파이썬 인터프리터를 사용하여 루트 폴더의 `main.py`를 실행합니다.
 ```bash
-PYTHONPATH=. app/venv/bin/python3 app/src/gui.py
+app/venv/bin/python3 main.py
 ```
 
-#### CLI 리스너 전용 (선택 사항)
-GUI 없이 단축키 리스너만 실행하려면 아래 명령을 사용합니다.
-```bash
-PYTHONPATH=. app/venv/bin/python3 app/src/cli.py
-```
+#### 상세 실행 옵션
+- **GUI 설정 창 (기본)**: 위 명령어를 통해 실행하며, 백그라운드 리스너가 함께 동작합니다.
+- **CLI 리스너 전용 (선택 사항)**: GUI 없이 단축키 리스너만 실행하려면 아래 명령을 사용합니다.
+  ```bash
+  PYTHONPATH=. app/venv/bin/python3 app/src/cli.py
+  ```
 
 ## 사용 가능한 단축키
 기본적으로 아래의 단축키가 설정되어 있으며, GUI에서 변경 가능합니다.
