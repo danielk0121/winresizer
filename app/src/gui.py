@@ -447,17 +447,26 @@ class WinResizerPreferences(QWidget):
         self.restart_hotkey_listener()
 
     def restart_hotkey_listener(self):
-        logging.info("단축키 리스너 재시작 절차 시작...")
+        logging.info("--- [단축키 리스너 재시작 시작] ---")
         if hasattr(self, 'ht') and self.ht.isRunning():
+            logging.info(f"기존 리스너 스레드(ID: {id(self.ht)}) 중단 시도 중...")
             self.ht.stop()
-            self.ht.wait(1000) # 최대 1초 대기
-            if self.ht.isRunning():
-                self.ht.terminate() # 멈추지 않으면 강제 종료
+            
+            logging.info("리스너 스레드 종료 대기 중 (최대 1.5초)...")
+            finished = self.ht.wait(1500)
+            
+            if not finished:
+                logging.warning("리스너 스레드가 정상 종료되지 않아 강제 종료(terminate)를 수행합니다.")
+                self.ht.terminate()
                 self.ht.wait()
+                logging.info("기존 리스너 스레드 강제 종료 완료")
+            else:
+                logging.info("기존 리스너 스레드 정상 종료 완료")
         
         self.ht = HotkeyListenerThread()
         self.ht.start()
-        logging.info("단축키 리스너 새 인스턴스 시작됨")
+        logging.info(f"새 리스너 스레드(ID: {id(self.ht)}) 시작 완료")
+        logging.info("--- [단축키 리스너 재시작 완료] ---")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
