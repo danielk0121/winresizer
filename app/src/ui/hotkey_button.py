@@ -36,7 +36,7 @@ class HotkeyButton(QPushButton):
         if event.key() == Qt.Key_Escape:
             logger.debug("Hotkey recording cancelled (Escape)")
             self.stop_recording()
-            config = config_manager.load_config()
+            config = config_manager.get_config()
             self.setText(config['shortcuts'][self.key].get('display', "Press hotkey"))
             return
             

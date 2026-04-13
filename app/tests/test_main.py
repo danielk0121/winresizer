@@ -10,14 +10,14 @@ class TestMainLogic(unittest.TestCase):
     @patch('core.window_controller.get_all_monitors_info')
     @patch('core.window_controller.calculate_window_position')
     @patch('core.window_controller.set_window_bounds')
-    @patch('core.window_controller.config_manager.load_config')
-    def test_execute_command_flow(self, mock_load_config, mock_set_bounds, mock_calc_pos, mock_get_monitors, mock_get_bounds, mock_get_window, mock_nsworkspace, mock_is_trusted):
+    @patch('core.window_controller.config_manager.get_config')
+    def test_execute_command_flow(self, mock_get_config, mock_set_bounds, mock_calc_pos, mock_get_monitors, mock_get_bounds, mock_get_window, mock_nsworkspace, mock_is_trusted):
         # 1. Mock 데이터 설정
         mock_is_trusted.return_value = True
         mock_active_app = MagicMock()
         mock_active_app.localizedName.return_value = "TestApp"
         mock_nsworkspace.sharedWorkspace.return_value.frontmostApplication.return_value = mock_active_app
-        mock_load_config.return_value = {'settings': {'gap': 0}}
+        mock_get_config.return_value = {'settings': {'gap': 0}}
         
         mock_get_monitors.return_value = [{"x": 0, "y": 0, "width": 1920, "height": 1080}]
         mock_calc_pos.return_value = (0, 0, 960, 1080) # 좌측 절반

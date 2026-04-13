@@ -75,7 +75,7 @@ class TestGuiE2E(unittest.TestCase):
         self.assertFalse(target_btn.is_recording)
         
         # 5. Verify file save
-        time.sleep(0.5) 
+        self.window.save_config_to_disk() 
         self.assertTrue(os.path.exists(TEST_CONFIG_FILE))
         
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -101,7 +101,7 @@ class TestGuiE2E(unittest.TestCase):
         self.assertEqual(target_btn.text().lower(), expected_display)
         
         # 4. Check saved data
-        time.sleep(0.5)
+        self.window.save_config_to_disk()
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config['shortcuts']['Right']['pynput'], f"<{expected_mod}>+<alt>+<shift>+<right>")
@@ -123,7 +123,7 @@ class TestGuiE2E(unittest.TestCase):
 
         
         # 4. Verify file save
-        time.sleep(0.5)
+        self.window.save_config_to_disk()
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config['shortcuts']['Right']['pynput'], "")
@@ -151,8 +151,7 @@ class TestGuiE2E(unittest.TestCase):
         self.assertEqual(btn.text(), "ctrl + l")
         
         # 4. Verify cleanup
-        with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
-            cleaned_config = json.load(f)
+        cleaned_config = config_manager.get_config()
         self.assertEqual(cleaned_config["shortcuts"]["Left"]["display"], "ctrl + l")
         self.assertNotIn("DeleteMe", cleaned_config["shortcuts"])
 
@@ -161,7 +160,7 @@ class TestGuiE2E(unittest.TestCase):
         new_gap_value = 15
         self.window.gap_spinbox.setValue(new_gap_value)
         
-        time.sleep(0.5)
+        self.window.save_config_to_disk()
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config['settings']['gap'], new_gap_value)
@@ -183,7 +182,7 @@ class TestGuiE2E(unittest.TestCase):
             QTest.mouseClick(clear_btn, Qt.LeftButton)
 
         self.assertEqual(target_btn.text(), "Press hotkey")
-        time.sleep(0.5)
+        self.window.save_config_to_disk()
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
             saved_config = json.load(f)
         self.assertEqual(saved_config['shortcuts']['Left']['pynput'], "")

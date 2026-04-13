@@ -1,23 +1,23 @@
 {
     "shortcuts": {
         "Left": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<left>",
+            "display": "cmd + alt + left",
             "mode": "left_half"
         },
         "Right": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<right>",
+            "display": "cmd + alt + right",
             "mode": "right_half"
         },
         "Top": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<up>",
+            "display": "cmd + alt + up",
             "mode": "top_half"
         },
         "Bottom": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<down>",
+            "display": "cmd + alt + down",
             "mode": "bottom_half"
         },
         "Top Left 1/4": {

@@ -1,7 +1,7 @@
 import sys
 import logging
 import subprocess
-import Quartz.CoreGraphics as CG
+import ApplicationServices
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
@@ -20,7 +20,7 @@ class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
         self.hotkey_button_map = {}
-        self.current_config = config_manager.load_config()
+        self.current_config = config_manager.get_config()
         self.save_timer = QTimer()
         self.save_timer.setSingleShot(True)
         self.save_timer.timeout.connect(self.save_config_to_disk)
@@ -56,6 +56,7 @@ class WinResizerPreferences(QWidget):
             QMessageBox.warning(self, "권한 필요", "창 제어를 위해 '손쉬운 사용' 권한이 필요합니다.\n설정 창에서 권한을 허용해주세요.")
             subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
 
+
     def setup_ui(self):
         self.setWindowTitle("WinResizer Settings")
         self.setMinimumSize(570, 1120)
@@ -64,11 +65,13 @@ class WinResizerPreferences(QWidget):
         main_layout = QVBoxLayout(self)
         
         # 1. Gap setting area
-        config = config_manager.load_config()
+        config = self.current_config
         main_layout.addWidget(QLabel("Gap:"))
         self.gap_spinbox = QSpinBox()
         self.gap_spinbox.setRange(0, 50)
+        self.gap_spinbox.blockSignals(True) # 신호 차단
         self.gap_spinbox.setValue(config.get('settings', {}).get('gap', 5))
+        self.gap_spinbox.blockSignals(False) # 신호 복구
         self.gap_spinbox.valueChanged.connect(self.on_gap_changed)
         main_layout.addWidget(self.gap_spinbox)
 

@@ -29,7 +29,7 @@ def execute_window_command(mode):
             return
             
         app_name = active_app.localizedName()
-        config = config_manager.load_config()
+        config = config_manager.get_config()
         settings = config.get('settings', {})
         
         if app_name in settings.get('ignore_apps', []):

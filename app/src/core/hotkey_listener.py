@@ -35,7 +35,7 @@ class HotkeyListenerThread(QThread):
                 currently_pressed_keys.add(k)
                 
                 current_time = time.time()
-                config = config_manager.load_config()
+                config = config_manager.get_config()
                 hotkey_config = config.get('shortcuts', {})
                 
                 for cfg in hotkey_config.values():

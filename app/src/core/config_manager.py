@@ -79,14 +79,18 @@ def load_config():
                         if k in DEFAULT_SETTINGS:
                             config_data['settings'][k] = v
                 
-                # 4. 필터링된 결과를 파일에 즉시 반영 (삭제된 항목 영구 제거)
-                save_config(config_data)
-                
         except Exception as e:
             logger.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
     
     _config_cache = config_data
     return config_data
+
+def get_config():
+    """캐시된 설정을 반환하거나, 없으면 새로 불러옵니다."""
+    global _config_cache
+    if _config_cache is None:
+        return load_config()
+    return _config_cache
 
 def get_setting(key, default=None):
     """지정된 설정값을 반환합니다. 캐시가 없으면 로드합니다."""
