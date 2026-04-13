@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
 DEFAULT_SETTINGS = {
     'gap': 5,
     'login_launch': True,
+    'center_size': {'width': 1200, 'height': 800},
     'auto_layouts': {
         'Slack': '우측_1/3',
         'iTerm2': '좌측_2/3'
