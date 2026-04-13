@@ -12,18 +12,24 @@ class TestChromeE2E(unittest.TestCase):
         subprocess.run(["open", "-a", "Google Chrome", "https://google.com"])
         time.sleep(3) 
 
+    @classmethod
+    def tearDownClass(cls):
+        print("테스트 종료: Google Chrome을 종료합니다.")
+        subprocess.run(["osascript", "-e", 'quit app "Google Chrome"'])
+
     def send_command(self, mode):
-        max_retries = 5
+        max_retries = 3
         for i in range(max_retries):
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(2)
-                    s.connect(('localhost', 9999))
+                    s.connect(('127.0.0.1', 9999))
                     s.sendall(mode.encode())
-                time.sleep(1.5) # 창 조절 시간 대기
+                time.sleep(2) # 창 조절 시간 대기
                 return
-            except:
-                time.sleep(2)
+            except Exception as e:
+                print(f"명령 전송 실패 (재시도 {i+1}/3): {e}")
+                time.sleep(1)
 
     def get_chrome_window(self):
         ws = NSWorkspace.sharedWorkspace()
