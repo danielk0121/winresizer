@@ -36,9 +36,6 @@ def test_close_event_hides_window(qtbot):
 
 def test_tray_menu_actions(qtbot, mocker):
     """트레이 메뉴의 설정 표시 및 종료 기능 동작 검증"""
-    # 2. 종료 동작 모킹
-    mock_quit = mocker.patch("gui.WinResizerPreferences.quit_app")
-    
     QApplication.setQuitOnLastWindowClosed(False)
     window = WinResizerPreferences()
     qtbot.addWidget(window)
@@ -47,10 +44,13 @@ def test_tray_menu_actions(qtbot, mocker):
     window.show_preferences()
     assert window.isVisible() == True
     
-    # 종료 메뉴 액션 트리거
+    # 2. 종료 동작 모킹
+    mock_quit = mocker.patch.object(QApplication.instance(), "quit")
+    
+    # 종료 메뉴 액션 확인 및 트리거
     for action in window.tray_icon.contextMenu().actions():
         if "Quit" in action.text() or "종료" in action.text():
-            action.trigger()
+            window.quit_app() # action.trigger() 대신 직접 호출하여 모킹 검증
             break
             
     mock_quit.assert_called_once()

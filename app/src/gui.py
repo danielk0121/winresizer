@@ -14,6 +14,7 @@ from core.window_controller import execute_window_command
 from ui.hotkey_button import HotkeyButton
 from core import config_manager
 from utils.logger import logger
+from utils.helpers import get_resource_path
 
 class WinResizerPreferences(QWidget):
     """
@@ -145,7 +146,11 @@ class WinResizerPreferences(QWidget):
         
         # Setup system tray
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon("app/src/ui/tray_icon.png"))
+        
+        icon_path = get_resource_path("app/src/ui/tray_icon.png")
+        icon = QIcon(icon_path)
+        icon.setIsMask(True)
+        self.tray_icon.setIcon(icon)
         
         # Create tray menu
         tray_menu = QMenu()
