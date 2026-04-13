@@ -1,8 +1,8 @@
 {
     "shortcuts": {
         "Left": {
-            "pynput": "<ctrl>+l",
-            "display": "ctrl + l",
+            "pynput": "",
+            "display": "단축키 입력",
             "mode": "left_half"
         },
         "Right": {
