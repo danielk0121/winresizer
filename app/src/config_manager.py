@@ -23,19 +23,36 @@ DEFAULT_CONFIG = {
     '이전 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '이전_디스플레이'},
 }
 
+# 기본 시스템 설정 (간격 등)
+DEFAULT_SETTINGS = {
+    'gap': 5,
+    'login_launch': True
+}
+
 def load_config():
     """파일에서 설정을 불러옵니다. 파일이 없으면 기본값을 반환합니다."""
+    config_data = {
+        'shortcuts': DEFAULT_CONFIG.copy(),
+        'settings': DEFAULT_SETTINGS.copy()
+    }
+    
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                # 기본 구조 유지하면서 저장된 값 덮어쓰기 (새로운 기능 추가 시 호환성 유지)
-                config = DEFAULT_CONFIG.copy()
-                config.update(loaded)
-                return config
+                # 이전 버전 호환성 처리
+                if 'shortcuts' in loaded:
+                    config_data['shortcuts'].update(loaded['shortcuts'])
+                else:
+                    # 구버전 구조인 경우 shortcuts로 간주
+                    config_data['shortcuts'].update(loaded)
+                
+                if 'settings' in loaded:
+                    config_data['settings'].update(loaded['settings'])
+                return config_data
         except Exception as e:
             print(f"설정 파일을 불러오는 중 오류 발생: {e}")
-    return DEFAULT_CONFIG.copy()
+    return config_data
 
 def save_config(config):
     """현재 설정을 파일에 저장합니다."""
