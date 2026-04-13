@@ -1,8 +1,8 @@
 {
     "shortcuts": {
         "왼쪽": {
-            "pynput": "<ctrl>+<alt>+<cmd>+<left>",
-            "display": "⌃⌥⌘←",
+            "pynput": "<ctrl>+<alt>+<left>",
+            "display": "⌃⌥<left>",
             "mode": "좌측_절반"
         },
         "오른쪽": {
@@ -41,8 +41,8 @@
             "mode": "우하단_1/4"
         },
         "좌측 1/3": {
-            "pynput": "<ctrl>+<alt>+<shift>+<left>",
-            "display": "⌃⌥⇧←",
+            "pynput": "",
+            "display": "단축키 입력",
             "mode": "좌측_1/3"
         },
         "중앙 1/3": {
@@ -102,6 +102,10 @@
             "Slack": "우측_1/3",
             "iTerm2": "좌측_2/3"
         },
-        "ignore_apps": []
+        "ignore_apps": [
+            "Photoshop",
+            "Final Cut Pro",
+            "Steam"
+        ]
     }
 }

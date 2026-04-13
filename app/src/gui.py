@@ -153,11 +153,25 @@ class CommandServerThread(QThread):
         except Exception as e: logging.error(f"서버 오류: {e}")
 
 class HotkeyListenerThread(QThread):
+    def __init__(self):
+        super().__init__()
+        self.listener = None
+
     def run(self):
         if not is_accessibility_trusted(): return
         mapping = {c['pynput']: lambda m=c['mode']: execute_window_command(m) for c in HOTKEY_CONFIG.values() if c['pynput']}
-        logging.info("단축키 리스너 시작됨")
-        with keyboard.GlobalHotKeys(mapping) as h: h.join()
+        logging.info("단축키 리스너 시작 시도...")
+        try:
+            with keyboard.GlobalHotKeys(mapping) as self.listener:
+                logging.info("단축키 리스너 활성화됨")
+                self.listener.join()
+        except Exception as e:
+            logging.error(f"단축키 리스너 오류: {e}")
+
+    def stop(self):
+        if self.listener:
+            self.listener.stop()
+            logging.info("단축키 리스너 중단 명령 전송")
 
 class HotkeyButton(QPushButton):
     hotkeyChanged = pyqtSignal(str, str) # display_name, pynput_key
@@ -433,12 +447,17 @@ class WinResizerPreferences(QWidget):
         self.restart_hotkey_listener()
 
     def restart_hotkey_listener(self):
+        logging.info("단축키 리스너 재시작 절차 시작...")
         if hasattr(self, 'ht') and self.ht.isRunning():
-            self.ht.terminate()
-            self.ht.wait()
+            self.ht.stop()
+            self.ht.wait(1000) # 최대 1초 대기
+            if self.ht.isRunning():
+                self.ht.terminate() # 멈추지 않으면 강제 종료
+                self.ht.wait()
+        
         self.ht = HotkeyListenerThread()
         self.ht.start()
-        logging.info("단축키 리스너 재시작 완료")
+        logging.info("단축키 리스너 새 인스턴스 시작됨")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
