@@ -1,4 +1,4 @@
-import sys
+import sys, socket
 from AppKit import NSWorkspace
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -30,34 +30,23 @@ def apply_gap(x, y, w, h, gap):
     return (x+gap, y+gap, w-2*gap, h-2*gap)
 
 def execute_window_command(mode):
-    # 윈도우 제외 리스트(Ignore List) 확인
     active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
-    if active_app and active_app.localizedName() in SETTINGS.get('ignore_apps', []):
-        print(f"[무시] {active_app.localizedName()} 앱에서는 단축키가 작동하지 않습니다.")
-        return
-
+    if active_app and active_app.localizedName() in SETTINGS.get('ignore_apps', []): return
     monitors = get_all_monitors_info(); if not monitors: return
     target_window = get_active_window_object(); if not target_window: return
     current_bounds = get_window_bounds(target_window); if not current_bounds: return
-    
     win_id, gap = hash(target_window), SETTINGS.get('gap', 0)
     if mode == "복구":
-        if win_id in WINDOW_HISTORY:
-            set_window_bounds(target_window, *WINDOW_HISTORY[win_id]); del WINDOW_HISTORY[win_id]
+        if win_id in WINDOW_HISTORY: set_window_bounds(target_window, *WINDOW_HISTORY[win_id]); del WINDOW_HISTORY[win_id]
         return
     if mode in ["다음_디스플레이", "이전_디스플레이"]:
-        idx = find_monitor(current_bounds, monitors)
-        n_idx = (idx+1 if mode == "다음_디스플레이" else idx-1) % len(monitors)
+        idx = find_monitor(current_bounds, monitors); n_idx = (idx+1 if mode == "다음_디스플레이" else idx-1) % len(monitors)
         if idx != n_idx:
-            m, nm = monitors[idx], monitors[n_idx]
-            set_window_bounds(target_window, nm['x']+(current_bounds[0]-m['x']), nm['y']+(current_bounds[1]-m['y']), min(current_bounds[2], nm['width']), min(current_bounds[3], nm['height']))
+            m, nm = monitors[idx], monitors[n_idx]; set_window_bounds(target_window, nm['x']+(current_bounds[0]-m['x']), nm['y']+(current_bounds[1]-m['y']), min(current_bounds[2], nm['width']), min(current_bounds[3], nm['height']))
         return
-
     if win_id not in WINDOW_HISTORY: WINDOW_HISTORY[win_id] = current_bounds
-    idx = find_monitor(current_bounds, monitors); m = monitors[idx]
-    screen_size = (m['width'], m['height'])
+    idx = find_monitor(current_bounds, monitors); m = monitors[idx]; screen_size = (m['width'], m['height'])
     local_bounds = (current_bounds[0]-m['x'], current_bounds[1]-m['y'], current_bounds[2], current_bounds[3])
-    
     next_mode = mode
     def get_gap_pos(mode_name): return apply_gap(*calculate_window_position(screen_size, mode_name), gap)
     if mode == "좌측_절반":
@@ -66,9 +55,22 @@ def execute_window_command(mode):
     elif mode == "우측_절반":
         if is_nearly_equal(local_bounds, get_gap_pos("우측_절반")): next_mode = "우측_1/3"
         elif is_nearly_equal(local_bounds, get_gap_pos("우측_1/3")): next_mode = "우측_2/3"
-
     x, y, w, h = apply_gap(*calculate_window_position(screen_size, next_mode), gap)
     set_window_bounds(target_window, x + m['x'], y + m['y'], w, h)
+
+class CommandServerThread(QThread):
+    def run(self):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind(('localhost', 9999))
+                s.listen()
+                while True:
+                    conn, addr = s.accept()
+                    with conn:
+                        data = conn.recv(1024).decode().strip()
+                        if data: QTimer.singleShot(0, lambda m=data: execute_window_command(m))
+        except: pass
 
 class AppObserver(QThread):
     def run(self):
@@ -79,8 +81,7 @@ class AppObserver(QThread):
             if active_app and active_app.localizedName() != self.last_app:
                 self.last_app = active_app.localizedName()
                 auto_layouts = SETTINGS.get('auto_layouts', {})
-                if self.last_app in auto_layouts:
-                    QTimer.singleShot(200, lambda m=auto_layouts[self.last_app]: execute_window_command(m))
+                if self.last_app in auto_layouts: QTimer.singleShot(200, lambda m=auto_layouts[self.last_app]: execute_window_command(m))
             self.msleep(500)
 
 class HotkeyListenerThread(QThread):
@@ -124,7 +125,7 @@ class ShortcutRow(QFrame):
 
 class WinResizerPreferences(QWidget):
     def __init__(self):
-        super().__init__(); self.ht = HotkeyListenerThread(); self.ht.start(); self.ao = AppObserver(); self.ao.start(); self.init_ui()
+        super().__init__(); self.ht = HotkeyListenerThread(); self.ht.start(); self.ao = AppObserver(); self.ao.start(); self.cs = CommandServerThread(); self.cs.start(); self.init_ui()
     def init_ui(self):
         self.setWindowTitle("마그넷 환경설정"); self.setFixedSize(450, 750); self.setStyleSheet("background-color: #3a363a;")
         v = QVBoxLayout(self); v.setContentsMargins(0,0,0,0); sa = QScrollArea(); sa.setWidgetResizable(True); sa.setStyleSheet("border:none;background:#3a363a")
