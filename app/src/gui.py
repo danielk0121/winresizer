@@ -11,21 +11,10 @@ from pynput import keyboard
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
 from app.src.window_manager import get_active_window_object, set_window_bounds, is_accessibility_trusted
+from app.src.config_manager import load_config, save_config
 
-# 기본 단축키 매핑 (수정 가능하도록 전역 변수로 관리)
-HOTKEY_CONFIG = {
-    '왼쪽': {'pynput': '<alt>+<cmd>+<left>', 'display': '⌥⌘←', 'mode': '좌측_절반'},
-    '오른쪽': {'pynput': '<alt>+<cmd>+<right>', 'display': '⌥⌘→', 'mode': '우측_절반'},
-    '위': {'pynput': '<alt>+<cmd>+<up>', 'display': '⌥⌘↑', 'mode': '위쪽_절반'},
-    '아래': {'pynput': '<alt>+<cmd>+<down>', 'display': '⌥⌘↓', 'mode': '아래쪽_절반'},
-    '좌측 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '좌측_1/3'},
-    '중앙 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '중앙_1/3'},
-    '우측 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_1/3'},
-    '좌측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '좌측_2/3'},
-    '우측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_2/3'},
-    '중앙': {'pynput': '<alt>+<cmd>+c', 'display': '⌥⌘C', 'mode': '중앙_고정'},
-    '최대화': {'pynput': '', 'display': '단축키 입력', 'mode': '최대화'},
-}
+# 설정 불러오기
+HOTKEY_CONFIG = load_config()
 
 def execute_window_command(mode):
     """실제 창 조절 로직 실행"""
@@ -212,6 +201,7 @@ class ShortcutRow(QFrame):
     def on_shortcut_changed(self, display_text, pynput_text):
         HOTKEY_CONFIG[self.config_key]['display'] = display_text
         HOTKEY_CONFIG[self.config_key]['pynput'] = pynput_text
+        save_config(HOTKEY_CONFIG) # 설정 변경 시 저장
         self.listener_thread.restart_listener()
 
     def clear_shortcut(self):
@@ -219,6 +209,7 @@ class ShortcutRow(QFrame):
         self.btn_shortcut.update_style()
         HOTKEY_CONFIG[self.config_key]['display'] = ""
         HOTKEY_CONFIG[self.config_key]['pynput'] = ""
+        save_config(HOTKEY_CONFIG) # 설정 변경 시 저장
         self.listener_thread.restart_listener()
 
 class WinResizerPreferences(QWidget):
@@ -230,13 +221,12 @@ class WinResizerPreferences(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("마그넷 환경설정")
-        self.setFixedSize(450, 750) # 항목이 늘어나 세로 크기 조정
+        self.setFixedSize(450, 750)
         self.setStyleSheet("background-color: #3a363a;")
 
         main_vbox = QVBoxLayout(self)
         main_vbox.setContentsMargins(0, 0, 0, 0)
 
-        # 스크롤 영역 추가 (항목이 많을 경우 대비)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("QScrollArea { border: none; background-color: #3a363a; }")
