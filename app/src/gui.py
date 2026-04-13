@@ -1,10 +1,54 @@
 import sys
+import threading
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QCheckBox, QFrame, QSpacerItem, QSizePolicy
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QFont
+
+# 기존 main.py의 로직 임포트
+from pynput import keyboard
+from app.src.coordinate_calculator import calculate_window_position
+from app.src.monitor_info import get_all_monitors_info
+from app.src.window_manager import get_active_window_object, set_window_bounds, is_accessibility_trusted
+
+# 단축키 매핑 (main.py와 동일하게 유지)
+HOTKEY_MAPPING = {
+    '<alt>+<cmd>+<left>': '좌측_절반',
+    '<alt>+<cmd>+<right>': '우측_절반',
+    '<alt>+<cmd>+c': '중앙_고정'
+}
+
+def execute_window_command(mode):
+    """실제 창 조절 로직 실행"""
+    monitors = get_all_monitors_info()
+    if not monitors: return
+    
+    main_monitor = monitors[0] # 첫 번째 모니터 기준 (임시)
+    screen_size = (main_monitor['width'], main_monitor['height'])
+    
+    x, y, width, height = calculate_window_position(screen_size, mode)
+    x += main_monitor['x']
+    y += main_monitor['y']
+
+    target_window = get_active_window_object()
+    if target_window:
+        set_window_bounds(target_window, x, y, width, height)
+        print(f"[{mode}] 창 크기 조정 완료")
+
+class HotkeyListenerThread(QThread):
+    """GUI를 방해하지 않고 백그라운드에서 단축키를 감지하는 스레드"""
+    def run(self):
+        if not is_accessibility_trusted():
+            print("오류: 접근성 권한이 없습니다. 창 조절 기능이 작동하지 않습니다.")
+            return
+
+        with keyboard.GlobalHotKeys({
+            key: lambda m=mode: execute_window_command(m) for key, mode in HOTKEY_MAPPING.items()
+        }) as h:
+            print("백그라운드 단축키 리스너 시작됨...")
+            h.join()
 
 class ShortcutRow(QFrame):
     def __init__(self, label_text, shortcut_text, parent=None):
@@ -15,19 +59,15 @@ class ShortcutRow(QFrame):
         layout.setContentsMargins(40, 0, 40, 0)
         layout.setSpacing(10)
 
-        # 1. 기능 이름 (레이블)
         self.lbl_name = QLabel(label_text)
         self.lbl_name.setFixedWidth(80)
-        # PyQt5에서는 Qt.AlignRight | Qt.AlignVCenter 사용
         self.lbl_name.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.lbl_name.setStyleSheet("color: white; font-size: 13px;")
 
-        # 2. 기능 아이콘 자리 (단순 둥근 사각형)
         self.icon_placeholder = QLabel()
         self.icon_placeholder.setFixedSize(24, 14)
         self.icon_placeholder.setStyleSheet("background-color: #777777; border-radius: 2px;")
 
-        # 3. 단축키 표시 버튼 영역 (버튼 + X 버튼)
         self.btn_frame = QFrame()
         self.btn_frame.setStyleSheet("""
             QFrame {
@@ -40,7 +80,6 @@ class ShortcutRow(QFrame):
         btn_layout.setContentsMargins(10, 0, 10, 0)
         btn_layout.setSpacing(5)
 
-        # 단축키 텍스트
         self.btn_shortcut = QPushButton(shortcut_text)
         self.btn_shortcut.setCursor(Qt.PointingHandCursor)
         color = "#aaaaaa" if "입력" in shortcut_text else "white"
@@ -59,7 +98,6 @@ class ShortcutRow(QFrame):
 
         btn_layout.addWidget(self.btn_shortcut, 1)
 
-        # X 버튼 (삭제) - '입력' 텍스트가 아닌 경우만 활성화
         if "입력" not in shortcut_text:
             self.btn_clear = QPushButton("✕")
             self.btn_clear.setFixedSize(16, 16)
@@ -85,17 +123,17 @@ class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
+        self.start_hotkey_listener()
 
     def init_ui(self):
         self.setWindowTitle("마그넷 환경설정")
         self.setFixedSize(450, 650)
-        self.setStyleSheet("background-color: #3a363a;") # 메인 배경 다크 그레이
+        self.setStyleSheet("background-color: #3a363a;")
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 20, 0, 20)
         main_layout.setSpacing(8)
 
-        # 단축키 목록
         shortcuts = [
             ("왼쪽", "⌥⌘←"),
             ("오른쪽", "⌥⌘→"),
@@ -110,10 +148,7 @@ class WinResizerPreferences(QWidget):
             row = ShortcutRow(label, shortcut)
             main_layout.addWidget(row)
 
-        # 빈 공간 채우기
         main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        # 하단 체크박스 옵션들
         self.add_checkboxes(main_layout)
 
     def add_checkboxes(self, layout):
@@ -128,20 +163,23 @@ class WinResizerPreferences(QWidget):
 
         chk_drag = QCheckBox("드래깅하여 윈도우 분할")
         chk_drag.setStyleSheet("color: #aaaaaa; font-size: 13px;")
-        chk_drag.setEnabled(False) # 비활성화 처리 예시
+        chk_drag.setEnabled(False)
 
         chk_layout.addWidget(chk_login)
         chk_layout.addWidget(chk_drag)
 
         layout.addWidget(checkbox_frame)
 
+    def start_hotkey_listener(self):
+        """백그라운드에서 단축키 리스너 실행"""
+        self.hotkey_thread = HotkeyListenerThread()
+        self.hotkey_thread.start()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    
-    # macOS 다크 모드 폰트 렌더링 최적화
     font = QFont("Helvetica Neue", 13)
     app.setFont(font)
 
     window = WinResizerPreferences()
     window.show()
-    sys.exit(app.exec_()) # PyQt5에서는 exec_() 사용
+    sys.exit(app.exec_())
