@@ -158,6 +158,104 @@ class HotkeyListenerThread(QThread):
         logging.info("단축키 리스너 시작됨")
         with keyboard.GlobalHotKeys(mapping) as h: h.join()
 
+class HotkeyButton(QPushButton):
+    hotkeyChanged = pyqtSignal(str, str) # display_name, pynput_key
+
+    def __init__(self, display_text, config_key):
+        super().__init__(display_text)
+        self.config_key = config_key
+        self.recording = False
+        self.setMinimumHeight(35)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #3c3f41;
+                border: 1px solid #555555;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #4c5052;
+            }
+        """)
+        self.clicked.connect(self.start_recording)
+
+    def start_recording(self):
+        self.recording = True
+        self.setText("키 입력 대기 중...")
+        self.setStyleSheet("background-color: #007acc; color: white; border-radius: 4px;")
+        self.grabKeyboard()
+
+    def keyPressEvent(self, event):
+        if not self.recording:
+            super().keyPressEvent(event)
+            return
+
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self.stop_recording()
+            return
+
+        modifiers = event.modifiers()
+        parts = []
+        display_parts = []
+
+        if modifiers & Qt.ControlModifier:
+            parts.append('<ctrl>')
+            display_parts.append('⌃')
+        if modifiers & Qt.AltModifier:
+            parts.append('<alt>')
+            display_parts.append('⌥')
+        if modifiers & Qt.ShiftModifier:
+            parts.append('<shift>')
+            display_parts.append('⇧')
+        if modifiers & Qt.MetaModifier:
+            parts.append('<cmd>')
+            display_parts.append('⌘')
+
+        # 키 이름 변환
+        key_name = ""
+        display_name = ""
+        
+        if Qt.Key_Left <= key <= Qt.Key_Down:
+            names = {Qt.Key_Left: 'left', Qt.Key_Right: 'right', Qt.Key_Up: 'up', Qt.Key_Down: 'down'}
+            d_names = {Qt.Key_Left: '←', Qt.Key_Right: '→', Qt.Key_Up: '↑', Qt.Key_Down: '↓'}
+            key_name = names.get(key)
+            display_name = d_names.get(key)
+        elif Qt.Key_A <= key <= Qt.Key_Z:
+            key_name = chr(key).lower()
+            display_name = chr(key).upper()
+        elif key == Qt.Key_Space:
+            key_name = "space"
+            display_name = "Space"
+        elif key == Qt.Key_Enter or key == Qt.Key_Return:
+            key_name = "enter"
+            display_name = "⏎"
+
+        if key_name:
+            parts.append(key_name)
+            display_parts.append(display_name)
+            
+            pynput_key = "+".join(parts)
+            display_text = "".join(display_parts)
+            
+            self.hotkeyChanged.emit(self.config_key, pynput_key)
+            self.setText(display_text)
+            self.stop_recording()
+
+    def stop_recording(self):
+        self.recording = False
+        self.releaseKeyboard()
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #3c3f41;
+                border: 1px solid #555555;
+                border-radius: 4px;
+                padding: 5px;
+            }
+        """)
+        if self.text() == "키 입력 대기 중...":
+            self.setText(HOTKEY_CONFIG[self.config_key]['display'])
+
 class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
@@ -170,44 +268,61 @@ class WinResizerPreferences(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("WinResizer 설정")
-        self.setMinimumSize(400, 500)
+        self.setMinimumSize(450, 600)
         self.setStyleSheet("background-color: #2b2b2b; color: #ffffff;")
 
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
         
         # 제목
         title = QLabel("WinResizer 설정")
         title.setFont(QFont("Arial", 18, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("margin-bottom: 20px; color: #00aaff;")
-        layout.addWidget(title)
+        title.setStyleSheet("margin-bottom: 10px; color: #00aaff; padding-top: 10px;")
+        main_layout.addWidget(title)
 
-        # 간격(Gap) 설정
+        # 시스템 설정 영역 (Gap)
+        settings_frame = QFrame()
+        settings_frame.setStyleSheet("background-color: #333333; border-radius: 8px; margin: 5px; padding: 10px;")
+        settings_layout = QVBoxLayout(settings_frame)
+        
         gap_layout = QHBoxLayout()
         gap_label = QLabel("창 간격 (Gap):")
-        gap_label.setFont(QFont("Arial", 12))
+        gap_label.setFont(QFont("Arial", 11))
         
         self.gap_spin = QSpinBox()
-        self.gap_spin.setRange(0, 100)
+        self.gap_spin.setRange(0, 50)
         self.gap_spin.setValue(SETTINGS.get('gap', 5))
         self.gap_spin.setSuffix(" px")
-        self.gap_spin.setStyleSheet("""
-            QSpinBox {
-                background-color: #3c3f41;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 5px;
-                min-width: 80px;
-            }
-        """)
+        self.gap_spin.setStyleSheet("background-color: #3c3f41; padding: 3px;")
         self.gap_spin.valueChanged.connect(self.update_gap)
         
         gap_layout.addWidget(gap_label)
         gap_layout.addWidget(self.gap_spin)
         gap_layout.addStretch()
-        layout.addLayout(gap_layout)
+        settings_layout.addLayout(gap_layout)
+        
+        main_layout.addWidget(settings_frame)
 
-        layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        # 단축키 설정 영역 (Scroll Area)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("border: none; background-color: transparent;")
+        
+        scroll_content = QWidget()
+        scroll_content.setStyleSheet("background-color: transparent;")
+        self.scroll_layout = QVBoxLayout(scroll_content)
+        
+        for name, cfg in HOTKEY_CONFIG.items():
+            row = QHBoxLayout()
+            row.addWidget(QLabel(name, styleSheet="font-size: 13px;"))
+            
+            btn = HotkeyButton(cfg['display'], name)
+            btn.hotkeyChanged.connect(self.update_hotkey)
+            row.addWidget(btn)
+            self.scroll_layout.addLayout(row)
+            
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
 
         # 종료 버튼
         btn_quit = QPushButton("앱 종료")
@@ -218,6 +333,7 @@ class WinResizerPreferences(QWidget):
                 color: white;
                 padding: 10px;
                 border-radius: 5px;
+                margin-top: 10px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -225,12 +341,31 @@ class WinResizerPreferences(QWidget):
             }
         """)
         btn_quit.clicked.connect(QApplication.instance().quit)
-        layout.addWidget(btn_quit)
+        main_layout.addWidget(btn_quit)
 
     def update_gap(self, value):
         SETTINGS['gap'] = value
         save_config(CONFIG)
         logging.info(f"창 간격 설정 변경: {value}px")
+
+    def update_hotkey(self, config_key, pynput_key):
+        HOTKEY_CONFIG[config_key]['pynput'] = pynput_key
+        # 디스플레이 텍스트 업데이트 (⌃⌥⌘ 등 기호로 변환)
+        display_text = pynput_key.replace('<ctrl>', '⌃').replace('<alt>', '⌥').replace('<shift>', '⇧').replace('<cmd>', '⌘').replace('+', '')
+        HOTKEY_CONFIG[config_key]['display'] = display_text
+        save_config(CONFIG)
+        logging.info(f"단축키 변경 [{config_key}]: {pynput_key}")
+        
+        # 리스너 재시작
+        self.restart_hotkey_listener()
+
+    def restart_hotkey_listener(self):
+        if hasattr(self, 'ht') and self.ht.isRunning():
+            self.ht.terminate()
+            self.ht.wait()
+        self.ht = HotkeyListenerThread()
+        self.ht.start()
+        logging.info("단축키 리스너 재시작 완료")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
