@@ -206,7 +206,8 @@ class WinResizerPreferences(QWidget):
         logging.info(f"단축키 갱신 요청: {k} -> {pk}")
         HOTKEY_CONFIG[k]['pynput'] = pk
         if pk:
-            display_text = pk.replace('<', '').replace('>', '').replace('+', '').upper()
+            # <ctrl>+<alt>+k -> ctrl + alt + k 형식으로 변환
+            display_text = pk.replace('<', '').replace('>', '').replace('+', ' + ')
             HOTKEY_CONFIG[k]['display'] = display_text
         else:
             display_text = "단축키 입력"
@@ -263,7 +264,10 @@ class HotkeyButton(QPushButton):
             pk = "+".join(parts + ([f"<{kn}>"] if len(kn)>1 else [kn]))
             logging.debug(f"새 단축키 입력됨: {pk}")
             self.hotkeyChanged.emit(self.key, pk)
-            self.setText("".join(d_parts) + kn.upper())
+            # setText는 hotkeyChanged -> update_hotkey를 통해 처리되므로 여기서 직접 호출하지 않아도 되지만, 
+            # 즉각적인 피드백을 위해 update_hotkey와 동일한 로직 적용
+            display_text = pk.replace('<', '').replace('>', '').replace('+', ' + ')
+            self.setText(display_text)
             self.stop_recording()
 
     def stop_recording(self):

@@ -10,10 +10,10 @@ def ensure_config_dir():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 DEFAULT_CONFIG = {
-    '왼쪽': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': '⌃⌥⌘←', 'mode': '좌측_절반'},
-    '오른쪽': {'pynput': '<ctrl>+<alt>+<cmd>+<right>', 'display': '⌃⌥⌘→', 'mode': '우측_절반'},
-    '위': {'pynput': '<ctrl>+<alt>+<cmd>+<up>', 'display': '⌃⌥⌘↑', 'mode': '위쪽_절반'},
-    '아래': {'pynput': '<ctrl>+<alt>+<cmd>+<down>', 'display': '⌃⌥⌘↓', 'mode': '아래쪽_절반'},
+    '왼쪽': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': 'ctrl + alt + cmd + left', 'mode': '좌측_절반'},
+    '오른쪽': {'pynput': '<ctrl>+<alt>+<cmd>+<right>', 'display': 'ctrl + alt + cmd + right', 'mode': '우측_절반'},
+    '위': {'pynput': '<ctrl>+<alt>+<cmd>+<up>', 'display': 'ctrl + alt + cmd + up', 'mode': '위쪽_절반'},
+    '아래': {'pynput': '<ctrl>+<alt>+<cmd>+<down>', 'display': 'ctrl + alt + cmd + down', 'mode': '아래쪽_절반'},
     '좌상단 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': '좌상단_1/4'},
     '우상단 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': '우상단_1/4'},
     '좌하단 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': '좌하단_1/4'},

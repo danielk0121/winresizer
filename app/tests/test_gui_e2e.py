@@ -85,8 +85,8 @@ class TestGuiE2E(unittest.TestCase):
         QTest.keyClick(target_btn, Qt.Key_K, Qt.ControlModifier | Qt.AltModifier)
         
         # 4. GUI 상태 확인
-        # ⌃⌥K 또는 ⌃⌥ + K 형태일 수 있음. PK 생성 로직에 따라 다름.
-        self.assertIn("K", target_btn.text())
+        # ctrl + alt + k 형식으로 표시됨
+        self.assertIn("k", target_btn.text().lower())
         self.assertFalse(target_btn.recording)
         
         # 5. 파일 저장 확인 (실제 파일 I/O 검증)
@@ -143,8 +143,8 @@ class TestGuiE2E(unittest.TestCase):
         # 1. 오염된 설정 파일 강제 생성 (삭제된 '중앙' 기능 포함)
         stale_data = {
             "shortcuts": {
-                "왼쪽": {"pynput": "<ctrl>+l", "display": "CTRL+L", "mode": "좌측_절반"},
-                "삭제된기능": {"pynput": "<ctrl>+x", "display": "DELETE_ME", "mode": "none"}
+                "왼쪽": {"pynput": "<ctrl>+l", "display": "ctrl + l", "mode": "좌측_절반"},
+                "삭제된기능": {"pynput": "<ctrl>+x", "display": "ctrl + x", "mode": "none"}
             },
             "settings": {"gap": 10, "old_setting": "discard_me"}
         }
