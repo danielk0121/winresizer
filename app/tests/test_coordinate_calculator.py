@@ -16,12 +16,5 @@ class TestCoordinateCalculator(unittest.TestCase):
         actual = calculate_window_position(screen_size, "우측_절반")
         self.assertEqual(expected, actual)
 
-    def test_calculate_center_fixed(self):
-        # 27인치 모니터 중앙에 1200x800 배치
-        screen_size = (2560, 1440)
-        expected = (680, 320, 1200, 800) # (2560-1200)/2, (1440-800)/2
-        actual = calculate_window_position(screen_size, "중앙_고정")
-        self.assertEqual(expected, actual)
-
 if __name__ == "__main__":
     unittest.main()

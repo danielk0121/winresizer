@@ -21,10 +21,7 @@ DEFAULT_CONFIG = {
     '우측 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_1/3'},
     '좌측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '좌측_2/3'},
     '우측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_2/3'},
-    '중앙': {'pynput': '<ctrl>+<alt>+<cmd>+c', 'display': '⌃⌥⌘C', 'mode': '중앙_고정'},
     '최대화': {'pynput': '', 'display': '단축키 입력', 'mode': '최대화'},
-    '다음 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '다음_디스플레이'},
-    '이전 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '이전_디스플레이'},
     '복구': {'pynput': '', 'display': '단축키 입력', 'mode': '복구'},
 }
 
@@ -32,7 +29,6 @@ DEFAULT_CONFIG = {
 DEFAULT_SETTINGS = {
     'gap': 5,
     'login_launch': True,
-    'center_size': {'width': 1200, 'height': 800},
     'auto_layouts': {
         'Slack': '우측_1/3',
         'iTerm2': '좌측_2/3'

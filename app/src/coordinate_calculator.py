@@ -40,12 +40,6 @@ def calculate_window_position(screen_size, mode):
         return (screen_width // 3, 0, 2 * (screen_width // 3), screen_height)
     
     # 기타 고정 모드
-    if mode == "중앙_고정":
-        window_width, window_height = 1200, 800
-        x = max(0, (screen_width - window_width) // 2)
-        y = max(0, (screen_height - window_height) // 2)
-        return (x, y, window_width, window_height)
-    
     if mode == "최대화":
         return (0, 0, screen_width, screen_height)
     
