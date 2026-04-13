@@ -10,40 +10,40 @@ from Quartz import (
     CGSizeMake
 )
 
-def 활성_윈도우_객체_가져오기():
+def get_active_window_object():
     """
     현재 가장 앞에 있는(Frontmost) 애플리케이션의 활성화된 윈도우 객체를 반환합니다.
     """
-    활성_앱 = NSWorkspace.sharedWorkspace().frontmostApplication()
-    피드 = 활성_앱.processIdentifier()
-    앱_객체 = AXUIElementCreateApplication(피드)
+    active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
+    pid = active_app.processIdentifier()
+    app_object = AXUIElementCreateApplication(pid)
     
-    결과, 윈도우_객체 = AXUIElementCopyAttributeValue(앱_객체, kAXFocusedWindowAttribute, None)
-    if 결과 == 0:
-        return 윈도우_객체
+    result, window_object = AXUIElementCopyAttributeValue(app_object, kAXFocusedWindowAttribute, None)
+    if result == 0:
+        return window_object
     return None
 
-def 윈도우_크기_및_위치_변경(윈도우_객체, x, y, 너비, 높이):
+def set_window_bounds(window_object, x, y, width, height):
     """
     지정된 윈도우 객체의 위치와 크기를 변경합니다.
     """
-    if not 윈도우_객체:
+    if not window_object:
         return False
         
-    위치 = CGPointMake(x, y)
-    크기 = CGSizeMake(너비, 높이)
+    position = CGPointMake(x, y)
+    size = CGSizeMake(width, height)
     
     # 위치 설정
-    AXUIElementSetAttributeValue(윈도우_객체, kAXPositionAttribute, 위치)
+    AXUIElementSetAttributeValue(window_object, kAXPositionAttribute, position)
     # 크기 설정
-    AXUIElementSetAttributeValue(윈도우_객체, kAXSizeAttribute, 크기)
+    AXUIElementSetAttributeValue(window_object, kAXSizeAttribute, size)
     return True
 
 if __name__ == "__main__":
     # 간단한 테스트: 현재 활성 창의 위치를 약간 옮김
-    대상 = 활성_윈도우_객체_가져오기()
-    if 대상:
+    target = get_active_window_object()
+    if target:
         print("활성 윈도우를 찾았습니다. 위치를 조정합니다.")
-        윈도우_크기_및_위치_변경(대상, 100, 100, 800, 600)
+        set_window_bounds(target, 100, 100, 800, 600)
     else:
         print("활성 윈도우를 찾을 수 없습니다. (접근성 권한 확인 필요)")

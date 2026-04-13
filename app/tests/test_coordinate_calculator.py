@@ -1,27 +1,27 @@
 import unittest
-from app.src.coordinate_calculator import 창_위치_계산
+from app.src.coordinate_calculator import calculate_window_position
 
-class 좌표_계산기_테스트(unittest.TestCase):
-    def test_좌측_절반_분할_계산(self):
+class TestCoordinateCalculator(unittest.TestCase):
+    def test_calculate_left_half(self):
         # 27인치 모니터 (2560x1440)의 좌측 50%
-        화면_크기 = (2560, 1440)
-        예상_결과 = (0, 0, 1280, 1440)
-        실제_결과 = 창_위치_계산(화면_크기, "좌측_절반")
-        self.assertEqual(예상_결과, 실제_결과)
+        screen_size = (2560, 1440)
+        expected = (0, 0, 1280, 1440)
+        actual = calculate_window_position(screen_size, "좌측_절반")
+        self.assertEqual(expected, actual)
 
-    def test_우측_절반_분할_계산(self):
+    def test_calculate_right_half(self):
         # 27인치 모니터의 우측 50%
-        화면_크기 = (2560, 1440)
-        예상_결과 = (1280, 0, 1280, 1440)
-        실제_결과 = 창_위치_계산(화면_크기, "우측_절반")
-        self.assertEqual(예상_결과, 실제_결과)
+        screen_size = (2560, 1440)
+        expected = (1280, 0, 1280, 1440)
+        actual = calculate_window_position(screen_size, "우측_절반")
+        self.assertEqual(expected, actual)
 
-    def test_중앙_고정_해상도_계산(self):
+    def test_calculate_center_fixed(self):
         # 27인치 모니터 중앙에 1200x800 배치
-        화면_크기 = (2560, 1440)
-        예상_결과 = (680, 320, 1200, 800) # (2560-1200)/2, (1440-800)/2
-        실제_결과 = 창_위치_계산(화면_크기, "중앙_고정")
-        self.assertEqual(예상_결과, 실제_결과)
+        screen_size = (2560, 1440)
+        expected = (680, 320, 1200, 800) # (2560-1200)/2, (1440-800)/2
+        actual = calculate_window_position(screen_size, "중앙_고정")
+        self.assertEqual(expected, actual)
 
 if __name__ == "__main__":
     unittest.main()
