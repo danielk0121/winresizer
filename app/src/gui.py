@@ -1,6 +1,7 @@
 import sys
 import logging
-import AppKit
+import subprocess
+import ApplicationServices
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
@@ -25,7 +26,7 @@ class WinResizerPreferences(QWidget):
 
     def check_permissions(self):
         """macOS 접근성 권한 체크"""
-        if not AppKit.AXIsProcessTrusted():
+        if not ApplicationServices.AXIsProcessTrusted():
             QMessageBox.warning(self, "권한 필요", "창 제어를 위해 '손쉬운 사용' 권한이 필요합니다.\n설정 창에서 권한을 허용해주세요.")
             subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
 
