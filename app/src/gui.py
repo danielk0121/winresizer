@@ -1,5 +1,6 @@
 import sys
 import logging
+import AppKit
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
@@ -19,7 +20,14 @@ class WinResizerPreferences(QWidget):
         self.hotkey_button_map = {}
         self.listener_thread = HotkeyListenerThread()
         self.listener_thread.start()
+        self.check_permissions()
         self.setup_ui()
+
+    def check_permissions(self):
+        """macOS 접근성 권한 체크"""
+        if not AppKit.AXIsProcessTrusted():
+            QMessageBox.warning(self, "권한 필요", "창 제어를 위해 '손쉬운 사용' 권한이 필요합니다.\n설정 창에서 권한을 허용해주세요.")
+            subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
 
     def setup_ui(self):
         self.setWindowTitle("WinResizer Settings")
