@@ -3,8 +3,10 @@
 윈도우 창 크기 조절기 프로젝트입니다.
 
 ## 프로젝트 구조
+- `main.py`: 프로젝트 루트의 메인 진입점 (app/src/main.py 호출)
 - **app**: 앱 소스코드 및 테스트 코드
-    - `src/gui.py`: 메인 GUI 설정 앱 및 백그라운드 서버
+    - `src/main.py`: 메인 GUI 설정 앱 진입점
+    - `src/gui.py`: GUI 위젯 및 백그라운드 서버 로직
     - `src/cli.py`: 단축키 기반 리스너 및 CLI 명령 서버 (Legacy)
     - `tests/`: E2E 및 단위 테스트 코드
     - `requirements.txt`: 의존성 목록
