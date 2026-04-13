@@ -1,8 +1,8 @@
 {
     "shortcuts": {
         "왼쪽": {
-            "pynput": "<ctrl>+l",
-            "display": "ctrl + l",
+            "pynput": "<cmd>+<alt>+<shift>+<left>",
+            "display": "cmd + alt + shift + left",
             "mode": "좌측_절반"
         },
         "오른쪽": {
