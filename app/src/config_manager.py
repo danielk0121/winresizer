@@ -21,6 +21,7 @@ DEFAULT_CONFIG = {
     '최대화': {'pynput': '', 'display': '단축키 입력', 'mode': '최대화'},
     '다음 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '다음_디스플레이'},
     '이전 디스플레이': {'pynput': '', 'display': '단축키 입력', 'mode': '이전_디스플레이'},
+    '복구': {'pynput': '', 'display': '단축키 입력', 'mode': '복구'},
 }
 
 # 기본 시스템 설정 (간격 등)
