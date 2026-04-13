@@ -28,8 +28,8 @@ class TestHotkeySwapBug(unittest.TestCase):
         self.window = gui.WinResizerPreferences()
 
     def test_ctrl_and_cmd_recognition_macos_fixed(self):
-        """macOS에서 Qt의 Ctrl/Cmd 반전 현상을 보정한 결과가 올바른지 검증"""
-        target_btn = self.window.hotkey_buttons['왼쪽']
+        """Verify the result of correcting Qt's Ctrl/Cmd reversal on macOS."""
+        target_btn = self.window.hotkey_button_map['Left']
         
         # 1. Qt.ControlModifier 입력 (macOS Qt 버그 시 실제론 Cmd로 보고됨)
         # 우리 앱은 이를 보정하여 <cmd>로 표시해야 함

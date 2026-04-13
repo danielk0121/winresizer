@@ -1,196 +1,68 @@
 import sys
-import socket
 import logging
-import os
-import datetime
-import time
-import threading
-from AppKit import NSWorkspace
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QLineEdit
+    QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont
-
-from pynput import keyboard
-from coordinate_calculator import calculate_window_position
-from monitor_info import get_all_monitors_info
-from window_manager import (
-    get_active_window_object, set_window_bounds, get_window_bounds, 
-    is_accessibility_trusted, activate_application
-)
-from config_manager import load_config, save_config
-
-# 로깅 설정
-LOG_DIR = "log"
-if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
-kst_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-log_filename = f"winresizer_{kst_now}_KST.log"
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s',
-                    handlers=[logging.FileHandler(os.path.join(LOG_DIR, log_filename), encoding='utf-8'), logging.StreamHandler(sys.stdout)])
-
-logging.debug("애플리케이션 시작 및 로깅 설정 완료")
-
-CONFIG = load_config()
-HOTKEY_CONFIG = CONFIG['shortcuts']
-SETTINGS = CONFIG['settings']
-WINDOW_HISTORY = {}
-GLOBAL_RECORDING = False # 단축키 녹화 중 여부 플래그
-
-def apply_gap(x, y, w, h, gap):
-    return (x + gap, y + gap, w - 2 * gap, h - 2 * gap)
-
-def execute_window_command(mode):
-    try:
-        logging.debug(f"명령 실행 시작: {mode}")
-        active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
-        if not active_app:
-            logging.debug("활성 앱을 찾을 수 없음")
-            return
-            
-        app_name = active_app.localizedName()
-        if app_name in SETTINGS.get('ignore_apps', []):
-            logging.debug(f"무시 대상 앱: {app_name}")
-            return
-            
-        monitors = get_all_monitors_info()
-        target_window = get_active_window_object()
-        if not target_window:
-            logging.debug("타겟 윈도우를 찾을 수 없음")
-            return
-            
-        current_bounds = get_window_bounds(target_window)
-        if not current_bounds:
-            logging.debug("윈도우 경계를 가져올 수 없음")
-            return
-            
-        win_id, gap = hash(target_window), SETTINGS.get('gap', 5)
-        
-        if mode == "복구":
-            if win_id in WINDOW_HISTORY:
-                set_window_bounds(target_window, *WINDOW_HISTORY[win_id])
-                del WINDOW_HISTORY[win_id]
-                logging.info("윈도우 복구 완료")
-            return
-        
-        if win_id not in WINDOW_HISTORY: WINDOW_HISTORY[win_id] = current_bounds
-        idx = 0
-        cx, cy = current_bounds[0] + current_bounds[2] // 2, current_bounds[1] + current_bounds[3] // 2
-        for i, m in enumerate(monitors):
-            if m['x'] <= cx < m['x'] + m['width'] and m['y'] <= cy < m['y'] + m['height']:
-                idx = i; break
-        m = monitors[idx]
-        screen_size = (m['width'], m['height'])
-        
-        res_coords = calculate_window_position(screen_size, mode)
-        x_rel, y_rel, w, h = apply_gap(*res_coords, gap)
-        set_window_bounds(target_window, x_rel + m['x'], y_rel + m['y'], w, h)
-        
-        # [수정] 창 이동 후 포커스가 유실되는 현상을 방지하기 위해 강제 재활성화
-        try:
-            pid = active_app.processIdentifier()
-            activate_application(pid)
-        except:
-            pass
-            
-        logging.info(f"명령 실행 완료: {mode}")
-    except Exception as e: 
-        logging.error(f"명령 실행 중 예외 발생: {e}", exc_info=True)
-
-class HotkeyListenerThread(QThread):
-    def run(self):
-        logging.info("리스너 스레드 시작")
-        if not is_accessibility_trusted():
-            logging.warning("Accessibility 권한이 없어 리스너를 시작할 수 없습니다.")
-            return
-        
-        current_keys = set()
-        
-        last_trigger_time = 0
-
-        def on_press(key):
-            nonlocal last_trigger_time
-            if GLOBAL_RECORDING:
-                return
-                
-            try:
-                k = key.char.lower() if hasattr(key, 'char') and key.char else str(key).replace('Key.', '')
-                current_keys.add(k)
-                
-                now = time.time()
-                for cfg in HOTKEY_CONFIG.values():
-                    pynput_str = cfg['pynput']
-                    if not pynput_str: continue
-                    
-                    required = set(pynput_str.replace('<', '').replace('>', '').split('+'))
-                    if required.issubset(current_keys):
-                        # 너무 빠른 연속 트리거 방지 (0.2초 쿨다운)
-                        if now - last_trigger_time > 0.2:
-                            logging.debug(f"단축키 감지됨: {pynput_str}")
-                            execute_window_command(cfg['mode'])
-                            last_trigger_time = now
-                        
-                        # [중요] 모든 키를 지우지 않고, 수식 키가 아닌 키만 제거하여 연속 입력 지원
-                        # 혹은 수식 키를 제외한 세트만 유지
-                        modifiers = {'ctrl', 'alt', 'cmd', 'shift', 'ctrl_l', 'ctrl_r', 'alt_l', 'alt_r', 'cmd_l', 'cmd_r', 'shift_l', 'shift_r'}
-                        current_keys.intersection_update(modifiers)
-                        break
-            except Exception as e:
-                logging.error(f"on_press 오류: {e}")
-
-        def on_release(key):
-            try:
-                k = key.char.lower() if hasattr(key, 'char') and key.char else str(key).replace('Key.', '')
-                if k in current_keys: current_keys.remove(k)
-            except Exception as e:
-                logging.error(f"on_release 오류: {e}")
-
-        logging.info("영구 단축키 엔진 시작됨")
-        try:
-            with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-                listener.join()
-        except Exception as e:
-            logging.error(f"리스너 실행 중 오류: {e}", exc_info=True)
+from core.hotkey_listener import HotkeyListenerThread
+from core.window_controller import execute_window_command
+from ui.hotkey_button import HotkeyButton
+from core import config_manager
+from utils.logger import logger
 
 class WinResizerPreferences(QWidget):
+    """
+    Main GUI class for WinResizer preferences.
+    """
     def __init__(self):
         super().__init__()
-        self.hotkey_buttons = {} # 버튼 객체 보관용
-        self.ht = HotkeyListenerThread(); self.ht.start()
-        self.init_ui()
+        self.hotkey_button_map = {}
+        self.listener_thread = HotkeyListenerThread()
+        self.listener_thread.start()
+        self.setup_ui()
 
-    def init_ui(self):
-        self.setWindowTitle("WinResizer 설정"); self.setMinimumSize(570, 1120); self.setStyleSheet("background-color: #2b2b2b; color: white;")
-        layout = QVBoxLayout(self)
+    def setup_ui(self):
+        self.setWindowTitle("WinResizer Settings")
+        self.setMinimumSize(570, 1120)
+        self.setStyleSheet("background-color: #2b2b2b; color: white;")
         
-        # 간격 설정
-        self.gap_spin = QSpinBox(); self.gap_spin.setRange(0, 50); self.gap_spin.setValue(SETTINGS.get('gap', 5))
-        self.gap_spin.valueChanged.connect(lambda v: (SETTINGS.update({'gap': v}), save_config(CONFIG)))
-        layout.addWidget(QLabel("창 간격 (Gap):")); layout.addWidget(self.gap_spin)
+        main_layout = QVBoxLayout(self)
+        
+        # 1. Gap setting area
+        config = config_manager.load_config()
+        main_layout.addWidget(QLabel("Gap:"))
+        self.gap_spinbox = QSpinBox()
+        self.gap_spinbox.setRange(0, 50)
+        self.gap_spinbox.setValue(config.get('settings', {}).get('gap', 5))
+        self.gap_spinbox.valueChanged.connect(self.on_gap_changed)
+        main_layout.addWidget(self.gap_spinbox)
 
-        # 단축키 목록
+        # 2. Hotkey list area (scrollable)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame) # 테두리 제거로 더 깔끔하게
+        scroll.setFrameShape(QFrame.NoFrame)
+        
         scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(scroll_content)
-        for name, cfg in HOTKEY_CONFIG.items():
+        scroll_layout = QVBoxLayout(scroll_content)
+        
+        shortcut_config = config.get('shortcuts', {})
+        for name, info in shortcut_config.items():
             row = QHBoxLayout()
+            
             label = QLabel(name)
             label.setMinimumWidth(100)
             row.addWidget(label)
             
-            btn = HotkeyButton(cfg['display'], name)
-            btn.hotkeyChanged.connect(self.update_hotkey)
-            self.hotkey_buttons[name] = btn
-            row.addWidget(btn)
+            button = HotkeyButton(info['display'], name)
+            button.hotkeyChanged.connect(self.update_hotkey)
+            self.hotkey_button_map[name] = button
+            row.addWidget(button)
             
-            # 삭제 버튼 추가
-            del_btn = QPushButton("✕")
-            del_btn.setFixedSize(30, 30)
-            del_btn.setToolTip(f"{name} 단축키 초기화")
-            del_btn.setStyleSheet("""
+            # Individual delete button
+            delete_button = QPushButton("✕")
+            delete_button.setFixedSize(30, 30)
+            delete_button.setToolTip(f"Reset {name} hotkey")
+            delete_button.setStyleSheet("""
                 QPushButton {
                     background-color: #444;
                     color: #bbb;
@@ -202,15 +74,17 @@ class WinResizerPreferences(QWidget):
                     color: white;
                 }
             """)
-            del_btn.clicked.connect(lambda checked, k=name: self.update_hotkey(k, ""))
-            row.addWidget(del_btn)
+            delete_button.clicked.connect(lambda checked, k=name: self.update_hotkey(k, ""))
+            row.addWidget(delete_button)
             
-            self.scroll_layout.addLayout(row)
-        scroll.setWidget(scroll_content); layout.addWidget(scroll)
+            scroll_layout.addLayout(row)
+            
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
         
-        # 모든 단축키 삭제 버튼 추가 (사용자 요청 사항)
-        btn_clear_all = QPushButton("모든 단축키 삭제")
-        btn_clear_all.setStyleSheet("""
+        # 3. Bottom control buttons
+        clear_all_button = QPushButton("Clear All Hotkeys")
+        clear_all_button.setStyleSheet("""
             QPushButton {
                 background-color: #c0392b;
                 color: white;
@@ -222,125 +96,54 @@ class WinResizerPreferences(QWidget):
                 background-color: #e74c3c;
             }
         """)
-        btn_clear_all.clicked.connect(self.clear_all_shortcuts)
-        layout.addWidget(btn_clear_all)
+        clear_all_button.clicked.connect(self.clear_all_hotkeys)
+        main_layout.addWidget(clear_all_button)
         
-        btn_quit = QPushButton("앱 종료"); btn_quit.clicked.connect(QApplication.instance().quit); layout.addWidget(btn_quit)
+        quit_button = QPushButton("Quit")
+        quit_button.clicked.connect(QApplication.instance().quit)
+        main_layout.addWidget(quit_button)
 
-    def clear_all_shortcuts(self):
-        """모든 단축키 설정을 초기화합니다."""
-        from PyQt5.QtWidgets import QMessageBox
-        reply = QMessageBox.question(self, '확인', '정말 모든 단축키를 삭제하시겠습니까?',
+    def on_gap_changed(self, value):
+        config = config_manager.load_config()
+        if 'settings' not in config:
+            config['settings'] = {}
+        config['settings']['gap'] = value
+        config_manager.save_config(config)
+        logger.info(f"Gap setting changed: {value}")
+
+    def update_hotkey(self, key_name, pynput_str):
+        logger.info(f"Hotkey updated: {key_name} -> {pynput_str}")
+        config = config_manager.load_config()
+        shortcuts = config.get('shortcuts', {})
+        
+        if key_name in shortcuts:
+            shortcuts[key_name]['pynput'] = pynput_str
+            if pynput_str:
+                display_text = pynput_str.replace('<', '').replace('>', '').replace('+', ' + ')
+                shortcuts[key_name]['display'] = display_text
+            else:
+                display_text = "Press hotkey"
+                shortcuts[key_name]['display'] = display_text
+
+                
+            if key_name in self.hotkey_button_map:
+                self.hotkey_button_map[key_name].setText(display_text)
+                
+            config_manager.save_config(config)
+            logger.info(f"Hotkey saved: {key_name}")
+
+    def clear_all_hotkeys(self):
+        reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to clear all hotkeys?',
                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         
         if reply == QMessageBox.Yes:
-            for k in list(HOTKEY_CONFIG.keys()):
-                self.update_hotkey(k, "")
-            logging.info("모든 단축키가 초기화되었습니다.")
-
-    def update_hotkey(self, k, pk):
-        logging.info(f"단축키 갱신 요청: {k} -> {pk}")
-        HOTKEY_CONFIG[k]['pynput'] = pk
-        if pk:
-            # <ctrl>+<alt>+k -> ctrl + alt + k 형식으로 변환
-            display_text = pk.replace('<', '').replace('>', '').replace('+', ' + ')
-            HOTKEY_CONFIG[k]['display'] = display_text
-        else:
-            display_text = "단축키 입력"
-            HOTKEY_CONFIG[k]['display'] = display_text
-            
-        # UI 즉시 반영
-        if k in self.hotkey_buttons:
-            self.hotkey_buttons[k].setText(display_text)
-            
-        save_config(CONFIG)
-        logging.info(f"단축키 갱신 완료: {pk}")
-
-class HotkeyButton(QPushButton):
-    hotkeyChanged = pyqtSignal(str, str)
-    def __init__(self, text, key):
-        super().__init__(text); self.key = key; self.recording = False
-        self.clicked.connect(self.start_recording)
-        
-    def start_recording(self):
-        global GLOBAL_RECORDING
-        logging.debug(f"단축키 녹화 시작: {self.key}")
-        self.recording = True
-        GLOBAL_RECORDING = True
-        self.setText("입력 대기...")
-        self.grabKeyboard()
-        
-    def keyPressEvent(self, event):
-        if not self.recording:
-            super().keyPressEvent(event)
-            return
-            
-        if event.key() == Qt.Key_Escape:
-            logging.debug("단축키 녹화 취소 (Escape)")
-            self.stop_recording()
-            self.setText(HOTKEY_CONFIG[self.key]['display'])
-            return
-            
-        if event.key() in (Qt.Key_Backspace, Qt.Key_Delete):
-            logging.debug(f"단축키 삭제 요청: {self.key}")
-            self.hotkeyChanged.emit(self.key, "")
-            self.setText("단축키 입력")
-            self.stop_recording()
-            return
-        
-        parts, d_parts = [], []
-        mods = event.modifiers()
-        import sys
-        
-        # macOS 등 플랫폼별 Modifier 인식 버그 수정 (사용자 보고 기반: Ctrl/Cmd 반전 현상)
-        if sys.platform == 'darwin':
-            # 사용자 보고: macOS에서 Ctrl을 누르면 cmd가, Cmd를 누르면 ctrl이 찍힘
-            # 따라서 Qt가 반대로 보고하는 경우를 대비해 매핑을 보정함
-            if mods & Qt.ControlModifier: 
-                parts.append('<cmd>')
-                d_parts.append('⌘')
-            if mods & Qt.MetaModifier: 
-                parts.append('<ctrl>')
-                d_parts.append('⌃')
-        else:
-            # 타 플랫폼(Windows/Linux)은 표준 매핑 사용
-            if mods & Qt.ControlModifier: 
-                parts.append('<ctrl>')
-                d_parts.append('⌃')
-            if mods & Qt.MetaModifier: 
-                parts.append('<cmd>')
-                d_parts.append('⌘')
-
-        # 2. Alt (Option) 키 처리 (공통)
-        if mods & Qt.AltModifier: 
-            parts.append('<alt>')
-            d_parts.append('⌥')
-        
-        # 3. Shift 키 처리 (공통)
-        if mods & Qt.ShiftModifier:
-            parts.append('<shift>')
-            d_parts.append('⇧')
-        
-        k = event.key()
-        kn = {Qt.Key_Left:'left', Qt.Key_Right:'right', Qt.Key_Up:'up', Qt.Key_Down:'down'}.get(k, chr(k).lower() if 32 <= k <= 126 else None)
-        if kn:
-            pk = "+".join(parts + ([f"<{kn}>"] if len(kn)>1 else [kn]))
-            logging.debug(f"새 단축키 입력됨: {pk}")
-            self.hotkeyChanged.emit(self.key, pk)
-            # setText는 hotkeyChanged -> update_hotkey를 통해 처리되므로 여기서 직접 호출하지 않아도 되지만, 
-            # 즉각적인 피드백을 위해 update_hotkey와 동일한 로직 적용
-            display_text = pk.replace('<', '').replace('>', '').replace('+', ' + ')
-            self.setText(display_text)
-            self.stop_recording()
-
-    def stop_recording(self):
-        global GLOBAL_RECORDING
-        logging.debug(f"단축키 녹화 종료: {self.key}")
-        self.recording = False
-        GLOBAL_RECORDING = False
-        self.releaseKeyboard()
+            config = config_manager.load_config()
+            for key in list(config.get('shortcuts', {}).keys()):
+                self.update_hotkey(key, "")
+            logger.info("All hotkeys cleared.")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = WinResizerPreferences(); window.show()
+    window = WinResizerPreferences()
+    window.show()
     sys.exit(app.exec_())

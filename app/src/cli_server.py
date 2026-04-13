@@ -1,108 +1,30 @@
 import sys
 import socket
-import logging
-import os
-import datetime
+from core.window_controller import execute_window_command
+from utils.logger import logger
 
-# 1. 파일 위치를 기준으로 sys.path 설정
-current_file_path = os.path.abspath(__file__)
-src_dir = os.path.dirname(current_file_path)
-if src_dir not in sys.path:
-    sys.path.insert(0, src_dir)
-
-from AppKit import NSWorkspace
-from coordinate_calculator import calculate_window_position
-from monitor_info import get_all_monitors_info
-from window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
-import config_manager
-
-# 로깅 설정
-LOG_DIR = "log"
-if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
-
-# yyyyMMdd_HHmmss KST 형식의 타임스탬프 생성
-kst_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-log_filename = f"winresizer_{kst_now}_KST.log"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler(os.path.join(LOG_DIR, log_filename), encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-
-def execute_command(mode):
-    logging.info(f"--- [명령 실행: {mode}] ---")
-    
-    # 0. 설정 로드 (간격 등)
-    config_manager.load_config()
-    gap = config_manager.get_setting("gap", 0)
-
-    # 1. 권한 확인
-    if not is_accessibility_trusted():
-        logging.error("macOS '접근성(Accessibility)' 권한이 없습니다!")
-        return
-
-    # 2. 모니터 정보 가져오기
-    monitors = get_all_monitors_info()
-    if not monitors:
-        logging.error("모니터 정보를 가져올 수 없습니다.")
-        return
-        
-    # 3. 활성 창 및 현재 좌표 가져오기
-    target_window = get_active_window_object()
-    if not target_window:
-        logging.error("활성 창을 찾을 수 없습니다. (현재 앱: %s)" % NSWorkspace.sharedWorkspace().frontmostApplication().localizedName())
-        return
-        
-    current_bounds = get_window_bounds(target_window)
-    if not current_bounds:
-        logging.error("현재 창의 좌표 정보를 가져올 수 없습니다.")
-        return
-    
-    # 4. 현재 창이 어느 모니터에 있는지 판별
-    cx, cy = current_bounds[0] + current_bounds[2] // 2, current_bounds[1] + current_bounds[3] // 2
-    target_monitor = monitors[0]
-    for m in monitors:
-        if m['x'] <= cx < m['x'] + m['width'] and m['y'] <= cy < m['y'] + m['height']:
-            target_monitor = m
-            break
-            
-    logging.info(f"대상 모니터: {target_monitor}")
-    screen_size = (target_monitor['width'], target_monitor['height'])
-    
-    # 5. 새로운 좌표 계산 (간격 반영)
-    x_rel, y_rel, width, height = calculate_window_position(screen_size, mode, gap=gap)
-    
-    # 모니터 절대 좌표로 변환
-    final_x = x_rel + target_monitor['x']
-    final_y = y_rel + target_monitor['y']
-
-    # 6. 창 크기 적용
-    success = set_window_bounds(target_window, final_x, final_y, width, height)
-    if success:
-        logging.info(f"성공: {mode} -> ({final_x}, {final_y}, {width}, {height})")
-    else:
-        logging.error("창 제어 API 호출 실패")
-
-if __name__ == "__main__":
+def run_network_command_server():
+    """
+    Server that processes only window control commands via network, without hotkey listeners.
+    """
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            # 모든 인터페이스에서 대기하여 IPv4/IPv6 혼선 방지
+            # Listen on all interfaces (0.0.0.0)
             s.bind(('0.0.0.0', 9999))
             s.listen()
-            logging.info("CLI 테스트 전용 소켓 서버 시작됨 (Port: 9999, Bind: 0.0.0.0)")
+            logger.info("Network control server started (Port: 9999)")
             while True:
                 conn, addr = s.accept()
                 with conn:
                     data = conn.recv(1024).decode().strip()
                     if data:
-                        logging.info(f"[네트워크 명령 수신] {data}")
-                        execute_command(data)
+                        logger.info(f"[Remote command received] {data} (From: {addr})")
+                        execute_window_command(data)
     except KeyboardInterrupt:
-        logging.info("서버 종료")
+        logger.info("Stopping server.")
     except Exception as e:
-        logging.error(f"서버 오류: {e}")
+        logger.error(f"Error while running server: {e}")
+
+if __name__ == "__main__":
+    run_network_command_server()

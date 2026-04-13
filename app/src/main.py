@@ -1,29 +1,25 @@
 import sys
-import os
+from PyQt5.QtWidgets import QApplication
+from gui import WinResizerPreferences
+from utils.logger import logger
 
-# 1. 현재 파일(main.py)의 절대 경로를 기준으로 app/src 폴더를 찾음
-current_file_path = os.path.abspath(__file__)
-src_dir = os.path.dirname(current_file_path)
-project_root = os.path.dirname(os.path.dirname(src_dir))
-
-print("current_file_path: " + current_file_path)
-print("src_dir: " + src_dir)
-print("project_root: " + project_root)
-
-# 2. sys.path의 맨 앞에 app/src를 추가하여 내부 모듈(gui, window_manager 등)을 직접 임포트 가능하게 함
-if src_dir not in sys.path:
-    sys.path.insert(0, src_dir)
-
-# 3. 프로젝트 루트도 추가하여 'app.src.xxx' 형태의 임포트도 혹시 모를 상황에 대비해 지원
-if project_root not in sys.path:
-    sys.path.append(project_root)
-
-if __name__ == "__main__":
-    # 이제 'app.src.' 없이 직접 임포트 가능
-    from gui import WinResizerPreferences
-    from PyQt5.QtWidgets import QApplication
-
+def run_main():
+    """
+    Main application entry point.
+    Launches the GUI and background listener.
+    """
+    # 1. Logging setup
+    logger.info("WinResizer starting...")
+    
+    # 2. PyQt5 application initialization
     app = QApplication(sys.argv)
+    
+    # 3. Main preferences window creation
     window = WinResizerPreferences()
     window.show()
+    
+    # 4. Event loop start
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    run_main()
