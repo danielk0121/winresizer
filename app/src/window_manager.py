@@ -47,15 +47,16 @@ def get_window_bounds(window_object):
     res_pos, ax_pos = AXUIElementCopyAttributeValue(window_object, kAXPositionAttribute, None)
     if res_pos != 0: return None
     
-    pos = CGPoint()
-    AXValueGetValue(ax_pos, kAXValueCGPointType, pos)
+    # PyObjC: AXValueGetValue는 (성공여부, 결과값) 튜플을 반환하며 세 번째 인자는 None이어야 함
+    ok_pos, pos = AXValueGetValue(ax_pos, kAXValueCGPointType, None)
+    if not ok_pos: return None
     
     # 2. 크기 가져오기
     res_size, ax_size = AXUIElementCopyAttributeValue(window_object, kAXSizeAttribute, None)
     if res_size != 0: return None
     
-    size = CGSize()
-    AXValueGetValue(ax_size, kAXValueCGSizeType, size)
+    ok_size, size = AXValueGetValue(ax_size, kAXValueCGSizeType, None)
+    if not ok_size: return None
     
     return (pos.x, pos.y, size.width, size.height)
 
@@ -66,27 +67,24 @@ def set_window_bounds(window_object, x, y, width, height):
     if not window_object:
         return False
         
-    # 1. 위치 설정 (CGPoint -> AXValue)
+    # 1. 위치 설정 (x, y)
     pos = CGPointMake(x, y)
     ax_pos = AXValueCreate(kAXValueCGPointType, pos)
     res_pos = AXUIElementSetAttributeValue(window_object, kAXPositionAttribute, ax_pos)
     
-    # 2. 크기 설정 (CGSize -> AXValue)
+    # 2. 크기 설정 (w, h)
     size = CGSizeMake(width, height)
     ax_size = AXValueCreate(kAXValueCGSizeType, size)
     res_size = AXUIElementSetAttributeValue(window_object, kAXSizeAttribute, ax_size)
     
-    # AXError 결과 확인 (0: kAXErrorSuccess)
     if res_pos != 0 or res_size != 0:
-        print(f"경고: 창 제어 API 호출 실패 (위치 에러: {res_pos}, 크기 에러: {res_size})")
+        # 0이 아니면 실패 (macOS 에러 코드)
         return False
         
     return True
 
 if __name__ == "__main__":
-    if not is_accessibility_trusted():
-        print("접근성 권한이 없습니다. 시스템 설정에서 권한을 부여해 주세요.")
-    else:
+    if is_accessibility_trusted():
         target = get_active_window_object()
         if target:
             print(f"현재 창 정보: {get_window_bounds(target)}")
