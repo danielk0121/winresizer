@@ -120,7 +120,39 @@ class TestGuiE2E(unittest.TestCase):
             
         self.assertEqual(saved_config['shortcuts']['오른쪽']['pynput'], "")
         self.assertEqual(saved_config['shortcuts']['오른쪽']['display'], "단축키 입력")
-        print("E2E 검증 완료: 단축키가 성공적으로 초기화되었습니다.")
+        print("E2E 검증 완료: 키보드 입력을 통한 단축키 초기화 성공")
+
+    def test_hotkey_delete_button(self):
+        """'X' 삭제 버튼을 눌러 단축키가 즉시 초기화되는지 확인하는 E2E 테스트"""
+        # 1. '위' 단축키 버튼의 가로 레이아웃 찾기
+        target_del_btn = None
+        for i in range(self.window.scroll_layout.count()):
+            item = self.window.scroll_layout.itemAt(i)
+            if item.layout():
+                label = item.layout().itemAt(0).widget()
+                if label.text() == "위":
+                    # 레이아웃 구성: [Label, HotkeyButton, DeleteButton]
+                    target_del_btn = item.layout().itemAt(2).widget()
+                    target_hotkey_btn = item.layout().itemAt(1).widget()
+                    break
+        
+        self.assertIsNotNone(target_del_btn, "'위' 단축키 삭제 버튼을 찾을 수 없습니다.")
+        
+        # 2. 삭제 버튼 클릭 전 상태 확인 (기본값 설정됨)
+        self.assertNotEqual(target_hotkey_btn.text(), "단축키 입력")
+        
+        # 3. 삭제 버튼 클릭
+        QTest.mouseClick(target_del_btn, Qt.LeftButton)
+        
+        # 4. GUI 및 데이터 상태 확인
+        self.assertEqual(target_hotkey_btn.text(), "단축키 입력")
+        
+        time.sleep(0.5)
+        with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
+            saved_config = json.load(f)
+            
+        self.assertEqual(saved_config['shortcuts']['위']['pynput'], "")
+        print("E2E 검증 완료: 'X' 버튼을 통한 단축키 초기화 성공")
 
     def test_gap_setting_persistence(self):
         """간격(Gap) 설정을 변경하고 파일에 저장되는지 확인하는 E2E 테스트"""

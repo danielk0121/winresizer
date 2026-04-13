@@ -152,6 +152,7 @@ class HotkeyListenerThread(QThread):
 class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
+        self.hotkey_buttons = {} # 버튼 객체 보관용
         self.ht = HotkeyListenerThread(); self.ht.start()
         self.init_ui()
 
@@ -167,8 +168,35 @@ class WinResizerPreferences(QWidget):
         # 단축키 목록
         scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll_content = QWidget(); self.scroll_layout = QVBoxLayout(scroll_content)
         for name, cfg in HOTKEY_CONFIG.items():
-            row = QHBoxLayout(); row.addWidget(QLabel(name))
-            btn = HotkeyButton(cfg['display'], name); btn.hotkeyChanged.connect(self.update_hotkey); row.addWidget(btn)
+            row = QHBoxLayout()
+            label = QLabel(name)
+            label.setMinimumWidth(100)
+            row.addWidget(label)
+            
+            btn = HotkeyButton(cfg['display'], name)
+            btn.hotkeyChanged.connect(self.update_hotkey)
+            self.hotkey_buttons[name] = btn
+            row.addWidget(btn)
+            
+            # 삭제 버튼 추가
+            del_btn = QPushButton("✕")
+            del_btn.setFixedSize(30, 30)
+            del_btn.setToolTip(f"{name} 단축키 초기화")
+            del_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #444;
+                    color: #bbb;
+                    border-radius: 4px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #e74c3c;
+                    color: white;
+                }
+            """)
+            del_btn.clicked.connect(lambda checked, k=name: self.update_hotkey(k, ""))
+            row.addWidget(del_btn)
+            
             self.scroll_layout.addLayout(row)
         scroll.setWidget(scroll_content); layout.addWidget(scroll)
         
@@ -178,9 +206,15 @@ class WinResizerPreferences(QWidget):
         logging.info(f"단축키 갱신 요청: {k} -> {pk}")
         HOTKEY_CONFIG[k]['pynput'] = pk
         if pk:
-            HOTKEY_CONFIG[k]['display'] = pk.replace('<', '').replace('>', '').replace('+', '').upper()
+            display_text = pk.replace('<', '').replace('>', '').replace('+', '').upper()
+            HOTKEY_CONFIG[k]['display'] = display_text
         else:
-            HOTKEY_CONFIG[k]['display'] = "단축키 입력"
+            display_text = "단축키 입력"
+            HOTKEY_CONFIG[k]['display'] = display_text
+            
+        # UI 즉시 반영
+        if k in self.hotkey_buttons:
+            self.hotkey_buttons[k].setText(display_text)
             
         save_config(CONFIG)
         logging.info(f"단축키 갱신 완료: {pk}")
