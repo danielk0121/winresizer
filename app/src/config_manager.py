@@ -27,7 +27,11 @@ DEFAULT_CONFIG = {
 # 기본 시스템 설정 (간격 등)
 DEFAULT_SETTINGS = {
     'gap': 5,
-    'login_launch': True
+    'login_launch': True,
+    'auto_layouts': {
+        'Slack': '우측_1/3',
+        'iTerm2': '좌측_2/3'
+    }
 }
 
 def load_config():
