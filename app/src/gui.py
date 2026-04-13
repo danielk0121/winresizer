@@ -1,10 +1,10 @@
 import sys
-from PyQt6.QtWidgets import (
+from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QCheckBox, QFrame, QSpacerItem, QSizePolicy
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QColor
 
 class ShortcutRow(QFrame):
     def __init__(self, label_text, shortcut_text, parent=None):
@@ -18,7 +18,8 @@ class ShortcutRow(QFrame):
         # 1. 기능 이름 (레이블)
         self.lbl_name = QLabel(label_text)
         self.lbl_name.setFixedWidth(80)
-        self.lbl_name.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        # PyQt5에서는 Qt.AlignRight | Qt.AlignVCenter 사용
+        self.lbl_name.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.lbl_name.setStyleSheet("color: white; font-size: 13px;")
 
         # 2. 기능 아이콘 자리 (단순 둥근 사각형)
@@ -41,7 +42,7 @@ class ShortcutRow(QFrame):
 
         # 단축키 텍스트
         self.btn_shortcut = QPushButton(shortcut_text)
-        self.btn_shortcut.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_shortcut.setCursor(Qt.PointingHandCursor)
         color = "#aaaaaa" if "입력" in shortcut_text else "white"
         self.btn_shortcut.setStyleSheet(f"""
             QPushButton {{
@@ -62,7 +63,7 @@ class ShortcutRow(QFrame):
         if "입력" not in shortcut_text:
             self.btn_clear = QPushButton("✕")
             self.btn_clear.setFixedSize(16, 16)
-            self.btn_clear.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.btn_clear.setCursor(Qt.PointingHandCursor)
             self.btn_clear.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
@@ -110,7 +111,7 @@ class WinResizerPreferences(QWidget):
             main_layout.addWidget(row)
 
         # 빈 공간 채우기
-        main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # 하단 체크박스 옵션들
         self.add_checkboxes(main_layout)
@@ -143,4 +144,4 @@ if __name__ == "__main__":
 
     window = WinResizerPreferences()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_()) # PyQt5에서는 exec_() 사용
