@@ -88,6 +88,40 @@ class TestGuiE2E(unittest.TestCase):
         self.assertEqual(shortcut_data['pynput'], "<ctrl>+<alt>+k")
         print(f"E2E 검증 완료: 저장된 단축키 -> {shortcut_data['pynput']}")
 
+    def test_hotkey_deletion(self):
+        """단축키 녹화 중 Backspace를 눌러 초기화되는지 확인하는 E2E 테스트"""
+        # 1. '오른쪽' 단축키 버튼 찾기
+        target_btn = None
+        for i in range(self.window.scroll_layout.count()):
+            item = self.window.scroll_layout.itemAt(i)
+            if item.layout():
+                label = item.layout().itemAt(0).widget()
+                if label.text() == "오른쪽":
+                    target_btn = item.layout().itemAt(1).widget()
+                    break
+        
+        self.assertIsNotNone(target_btn, "'오른쪽' 단축키 버튼을 찾을 수 없습니다.")
+        
+        # 2. 버튼 클릭 (녹화 시작)
+        QTest.mouseClick(target_btn, Qt.LeftButton)
+        self.assertTrue(target_btn.recording)
+        
+        # 3. Backspace 키 입력 시뮬레이션
+        QTest.keyClick(target_btn, Qt.Key_Backspace)
+        
+        # 4. GUI 상태 확인
+        self.assertEqual(target_btn.text(), "단축키 입력")
+        self.assertFalse(target_btn.recording)
+        
+        # 5. 파일 저장 확인
+        time.sleep(0.5)
+        with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
+            saved_config = json.load(f)
+            
+        self.assertEqual(saved_config['shortcuts']['오른쪽']['pynput'], "")
+        self.assertEqual(saved_config['shortcuts']['오른쪽']['display'], "단축키 입력")
+        print("E2E 검증 완료: 단축키가 성공적으로 초기화되었습니다.")
+
     def test_gap_setting_persistence(self):
         """간격(Gap) 설정을 변경하고 파일에 저장되는지 확인하는 E2E 테스트"""
         

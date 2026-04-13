@@ -177,7 +177,11 @@ class WinResizerPreferences(QWidget):
     def update_hotkey(self, k, pk):
         logging.info(f"단축키 갱신 요청: {k} -> {pk}")
         HOTKEY_CONFIG[k]['pynput'] = pk
-        HOTKEY_CONFIG[k]['display'] = pk.replace('<', '').replace('>', '').replace('+', '').upper()
+        if pk:
+            HOTKEY_CONFIG[k]['display'] = pk.replace('<', '').replace('>', '').replace('+', '').upper()
+        else:
+            HOTKEY_CONFIG[k]['display'] = "단축키 입력"
+            
         save_config(CONFIG)
         logging.info(f"단축키 갱신 완료: {pk}")
 
@@ -204,6 +208,13 @@ class HotkeyButton(QPushButton):
             logging.debug("단축키 녹화 취소 (Escape)")
             self.stop_recording()
             self.setText(HOTKEY_CONFIG[self.key]['display'])
+            return
+            
+        if event.key() in (Qt.Key_Backspace, Qt.Key_Delete):
+            logging.debug(f"단축키 삭제 요청: {self.key}")
+            self.hotkeyChanged.emit(self.key, "")
+            self.setText("단축키 입력")
+            self.stop_recording()
             return
         
         parts, d_parts = [], []
