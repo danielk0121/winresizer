@@ -1,7 +1,10 @@
 import json
 import os
 
-CONFIG_FILE = "config.json"
+CONFIG_FILE = os.path.join("config", "config.json")
+
+def ensure_config_dir():
+    os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 DEFAULT_CONFIG = {
     '왼쪽': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': '⌃⌥⌘←', 'mode': '좌측_절반'},
@@ -63,6 +66,7 @@ def load_config():
 
 def save_config(config):
     """현재 설정을 파일에 저장합니다."""
+    ensure_config_dir()
     try:
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
