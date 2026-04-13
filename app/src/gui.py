@@ -233,6 +233,10 @@ class HotkeyButton(QPushButton):
             display_name = "⏎"
 
         if key_name:
+            # pynput 특수 키는 <key_name> 형식을 사용해야 함
+            if len(key_name) > 1:
+                key_name = f"<{key_name}>"
+                
             parts.append(key_name)
             display_parts.append(display_name)
             
