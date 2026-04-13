@@ -85,6 +85,7 @@ def execute_window_command(mode):
             return
         
         if mode in ["다음_디스플레이", "이전_디스플레이"]:
+            if win_id not in WINDOW_HISTORY: WINDOW_HISTORY[win_id] = current_bounds
             idx = find_monitor(current_bounds, monitors)
             n_idx = (idx + 1 if mode == "다음_디스플레이" else idx - 1) % len(monitors)
             if idx != n_idx:
