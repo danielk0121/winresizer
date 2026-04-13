@@ -38,10 +38,6 @@ SETTINGS = CONFIG['settings']
 WINDOW_HISTORY = {}
 GLOBAL_RECORDING = False # 단축키 녹화 중 여부 플래그
 
-def is_nearly_equal(b1, b2, tol=20):
-    if not b1 or not b2: return False
-    return all(abs(a - b) <= tol for a, b in zip(b1, b2))
-
 def apply_gap(x, y, w, h, gap):
     return (x + gap, y + gap, w - 2 * gap, h - 2 * gap)
 
@@ -86,21 +82,8 @@ def execute_window_command(mode):
                 idx = i; break
         m = monitors[idx]
         screen_size = (m['width'], m['height'])
-        local_bounds = (current_bounds[0] - m['x'], current_bounds[1] - m['y'], current_bounds[2], current_bounds[3])
         
-        def get_gap_pos(mode_name):
-            res = calculate_window_position(screen_size, mode_name)
-            return apply_gap(*res, gap)
-
-        next_mode = mode
-        if mode == "좌측_절반":
-            if is_nearly_equal(local_bounds, get_gap_pos("좌측_절반")): next_mode = "좌측_1/3"
-            elif is_nearly_equal(local_bounds, get_gap_pos("좌측_1/3")): next_mode = "좌측_2/3"
-        elif mode == "우측_절반":
-            if is_nearly_equal(local_bounds, get_gap_pos("우측_절반")): next_mode = "우측_1/3"
-            elif is_nearly_equal(local_bounds, get_gap_pos("우측_1/3")): next_mode = "우측_2/3"
-
-        res_coords = calculate_window_position(screen_size, next_mode)
+        res_coords = calculate_window_position(screen_size, mode)
         x_rel, y_rel, w, h = apply_gap(*res_coords, gap)
         set_window_bounds(target_window, x_rel + m['x'], y_rel + m['y'], w, h)
         
@@ -111,7 +94,7 @@ def execute_window_command(mode):
         except:
             pass
             
-        logging.info(f"명령 실행 완료: {next_mode}")
+        logging.info(f"명령 실행 완료: {mode}")
     except Exception as e: 
         logging.error(f"명령 실행 중 예외 발생: {e}", exc_info=True)
 

@@ -38,8 +38,11 @@ DEFAULT_SETTINGS = {
     'ignore_apps': ['Photoshop', 'Final Cut Pro', 'Steam']
 }
 
+_config_cache = None
+
 def load_config():
     """파일에서 설정을 불러옵니다. 파일이 없으면 기본값을 반환합니다."""
+    global _config_cache
     # 1. 기본값으로 초기화
     config_data = {
         'shortcuts': DEFAULT_CONFIG.copy(),
@@ -80,8 +83,16 @@ def load_config():
                 
         except Exception as e:
             logging.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
-            
+    
+    _config_cache = config_data
     return config_data
+
+def get_setting(key, default=None):
+    """지정된 설정값을 반환합니다. 캐시가 없으면 로드합니다."""
+    global _config_cache
+    if _config_cache is None:
+        load_config()
+    return _config_cache.get('settings', {}).get(key, default)
 
 def save_config(config):
     """현재 설정을 파일에 저장합니다."""
