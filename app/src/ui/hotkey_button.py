@@ -1,9 +1,12 @@
 import sys
-from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QPushButton, QMessageBox
 from PyQt5.QtCore import Qt, pyqtSignal
 from core.hotkey_listener import RECORDING_STATUS
 from core import config_manager
 from utils.logger import logger
+
+# 시스템 예약 단축키 (충돌 가능성 높은 목록)
+SYSTEM_RESERVED_KEYS = ["<cmd>+<space>", "<cmd>+<shift>+<space>"]
 
 class HotkeyButton(QPushButton):
     """
@@ -49,7 +52,7 @@ class HotkeyButton(QPushButton):
         parts, d_parts = [], []
         mods = event.modifiers()
         
-        # macOS Modifier compensation (considering PyQt5 characteristics)
+        # macOS Modifier compensation
         if sys.platform == 'darwin':
             if mods & Qt.ControlModifier: 
                 parts.append('<cmd>')
@@ -74,7 +77,6 @@ class HotkeyButton(QPushButton):
             d_parts.append('⇧')
         
         k = event.key()
-        # Special key mapping
         kn = {
             Qt.Key_Left: 'left', 
             Qt.Key_Right: 'right', 
@@ -84,10 +86,17 @@ class HotkeyButton(QPushButton):
         
         if kn:
             pk = "+".join(parts + ([f"<{kn}>"] if len(kn) > 1 else [kn]))
+            
+            # 충돌 검사
+            if pk in SYSTEM_RESERVED_KEYS:
+                logger.warning(f"Hotkey conflict detected: {pk}")
+                QMessageBox.warning(self, "단축키 충돌 경고", f"입력하신 단축키 '{pk}'는 macOS 시스템 예약 단축키와 충돌할 수 있습니다. 다른 조합을 사용해주세요.")
+                return
+
             logger.debug(f"New hotkey input: {pk}")
             self.hotkeyChanged.emit(self.key, pk)
             
-            # UI immediate feedback (pynput format -> display text)
+            # UI immediate feedback
             display_text = pk.replace('<', '').replace('>', '').replace('+', ' + ')
             self.setText(display_text)
             self.stop_recording()
