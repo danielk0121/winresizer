@@ -1,11 +1,12 @@
 import sys
 import logging
 import subprocess
-import ApplicationServices
+import Quartz.CoreGraphics as CG
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QFrame, QScrollArea, QSpinBox, QMessageBox
 )
+from PyQt5.QtCore import QTimer
 from core.hotkey_listener import HotkeyListenerThread
 from core.window_controller import execute_window_command
 from ui.hotkey_button import HotkeyButton
@@ -19,10 +20,35 @@ class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
         self.hotkey_button_map = {}
+        self.current_config = config_manager.load_config()
+        self.save_timer = QTimer()
+        self.save_timer.setSingleShot(True)
+        self.save_timer.timeout.connect(self.save_config_to_disk)
         self.listener_thread = HotkeyListenerThread()
         self.listener_thread.start()
         self.check_permissions()
         self.setup_ui()
+
+    def request_save(self):
+        self.save_timer.start(1000)
+
+    def save_config_to_disk(self):
+        config_manager.save_config(self.current_config)
+        logger.info("설정 파일 저장 완료 (Debounced)")
+
+    def on_gap_changed(self, value):
+        if 'settings' not in self.current_config:
+            self.current_config['settings'] = {}
+        self.current_config['settings']['gap'] = value
+        self.request_save()
+
+    def update_hotkey(self, key_name, pynput_str):
+        shortcuts = self.current_config.get('shortcuts', {})
+        if key_name in shortcuts:
+            shortcuts[key_name]['pynput'] = pynput_str
+            # ... (UI update)
+            self.request_save()
+
 
     def check_permissions(self):
         """macOS 접근성 권한 체크"""
@@ -113,17 +139,15 @@ class WinResizerPreferences(QWidget):
         main_layout.addWidget(quit_button)
 
     def on_gap_changed(self, value):
-        config = config_manager.load_config()
-        if 'settings' not in config:
-            config['settings'] = {}
-        config['settings']['gap'] = value
-        config_manager.save_config(config)
+        if 'settings' not in self.current_config:
+            self.current_config['settings'] = {}
+        self.current_config['settings']['gap'] = value
+        self.request_save()
         logger.info(f"Gap setting changed: {value}")
 
     def update_hotkey(self, key_name, pynput_str):
         logger.info(f"Hotkey updated: {key_name} -> {pynput_str}")
-        config = config_manager.load_config()
-        shortcuts = config.get('shortcuts', {})
+        shortcuts = self.current_config.get('shortcuts', {})
         
         if key_name in shortcuts:
             shortcuts[key_name]['pynput'] = pynput_str
@@ -138,7 +162,7 @@ class WinResizerPreferences(QWidget):
             if key_name in self.hotkey_button_map:
                 self.hotkey_button_map[key_name].setText(display_text)
                 
-            config_manager.save_config(config)
+            self.request_save()
             logger.info(f"Hotkey saved: {key_name}")
 
     def clear_all_hotkeys(self):
@@ -146,8 +170,7 @@ class WinResizerPreferences(QWidget):
                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         
         if reply == QMessageBox.Yes:
-            config = config_manager.load_config()
-            for key in list(config.get('shortcuts', {}).keys()):
+            for key in list(self.current_config.get('shortcuts', {}).keys()):
                 self.update_hotkey(key, "")
             logger.info("All hotkeys cleared.")
 
