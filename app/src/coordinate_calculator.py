@@ -4,17 +4,38 @@ def calculate_window_position(screen_size, mode):
     """
     screen_width, screen_height = screen_size
 
+    # 1/2 분할 (절반)
     if mode == "좌측_절반":
         return (0, 0, screen_width // 2, screen_height)
-    
     if mode == "우측_절반":
         return (screen_width // 2, 0, screen_width // 2, screen_height)
+    if mode == "위쪽_절반":
+        return (0, 0, screen_width, screen_height // 2)
+    if mode == "아래쪽_절반":
+        return (0, screen_height // 2, screen_width, screen_height // 2)
+
+    # 1/3 분할
+    if mode == "좌측_1/3":
+        return (0, 0, screen_width // 3, screen_height)
+    if mode == "중앙_1/3":
+        return (screen_width // 3, 0, screen_width // 3, screen_height)
+    if mode == "우측_1/3":
+        return (2 * (screen_width // 3), 0, screen_width // 3, screen_height)
+
+    # 2/3 분할
+    if mode == "좌측_2/3":
+        return (0, 0, 2 * (screen_width // 3), screen_height)
+    if mode == "우측_2/3":
+        return (screen_width // 3, 0, 2 * (screen_width // 3), screen_height)
     
+    # 기타 고정 모드
     if mode == "중앙_고정":
-        # 1200x800 해상도 중앙 배치 (기본값)
         window_width, window_height = 1200, 800
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
+        x = max(0, (screen_width - window_width) // 2)
+        y = max(0, (screen_height - window_height) // 2)
         return (x, y, window_width, window_height)
+    
+    if mode == "최대화":
+        return (0, 0, screen_width, screen_height)
     
     return (0, 0, screen_width, screen_height)

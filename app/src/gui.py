@@ -2,7 +2,7 @@ import sys
 import threading
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QPushButton, QCheckBox, QFrame, QSpacerItem, QSizePolicy
+    QLabel, QPushButton, QCheckBox, QFrame, QSpacerItem, QSizePolicy, QScrollArea
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 from PyQt5.QtGui import QFont
@@ -18,7 +18,13 @@ HOTKEY_CONFIG = {
     '오른쪽': {'pynput': '<alt>+<cmd>+<right>', 'display': '⌥⌘→', 'mode': '우측_절반'},
     '위': {'pynput': '<alt>+<cmd>+<up>', 'display': '⌥⌘↑', 'mode': '위쪽_절반'},
     '아래': {'pynput': '<alt>+<cmd>+<down>', 'display': '⌥⌘↓', 'mode': '아래쪽_절반'},
+    '좌측 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '좌측_1/3'},
+    '중앙 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '중앙_1/3'},
+    '우측 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_1/3'},
+    '좌측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '좌측_2/3'},
+    '우측 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': '우측_2/3'},
     '중앙': {'pynput': '<alt>+<cmd>+c', 'display': '⌥⌘C', 'mode': '중앙_고정'},
+    '최대화': {'pynput': '', 'display': '단축키 입력', 'mode': '최대화'},
 }
 
 def execute_window_command(mode):
@@ -43,7 +49,6 @@ class HotkeyListenerThread(QThread):
     def __init__(self):
         super().__init__()
         self.listener = None
-        self._is_running = True
 
     def run(self):
         self.restart_listener()
@@ -55,15 +60,15 @@ class HotkeyListenerThread(QThread):
         if not is_accessibility_trusted():
             return
 
-        # 현재 설정된 모든 단축키를 매핑
         mapping = {
             conf['pynput']: lambda m=conf['mode']: execute_window_command(m)
             for conf in HOTKEY_CONFIG.values() if conf['pynput']
         }
 
-        self.listener = keyboard.GlobalHotKeys(mapping)
-        self.listener.start()
-        print("단축키 리스너가 갱신되었습니다.")
+        if mapping:
+            self.listener = keyboard.GlobalHotKeys(mapping)
+            self.listener.start()
+            print("단축키 리스너가 갱신되었습니다.")
 
     def stop(self):
         if self.listener:
@@ -72,7 +77,7 @@ class HotkeyListenerThread(QThread):
 
 class ShortcutButton(QPushButton):
     """단축키 입력을 캡처하는 특수 버튼"""
-    shortcutChanged = pyqtSignal(str, str) # (display_text, pynput_text)
+    shortcutChanged = pyqtSignal(str, str)
 
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
@@ -112,11 +117,9 @@ class ShortcutButton(QPushButton):
         key = event.key()
         modifiers = event.modifiers()
 
-        # 제어키만 눌린 경우는 무시
         if key in [Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta]:
             return
 
-        # 단축키 조합 빌드
         parts_pynput = []
         parts_display = []
 
@@ -133,7 +136,6 @@ class ShortcutButton(QPushButton):
             parts_pynput.append('<cmd>')
             parts_display.append('⌘')
 
-        # 일반 키 처리
         key_map = {
             Qt.Key_Left: ('<left>', '←'),
             Qt.Key_Right: ('<right>', '→'),
@@ -146,8 +148,11 @@ class ShortcutButton(QPushButton):
         if key in key_map:
             p_key, d_key = key_map[key]
         else:
-            p_key = chr(key).lower()
-            d_key = chr(key).upper()
+            try:
+                p_key = chr(key).lower()
+                d_key = chr(key).upper()
+            except:
+                return
 
         parts_pynput.append(p_key)
         parts_display.append(d_key)
@@ -195,6 +200,7 @@ class ShortcutRow(QFrame):
 
         self.btn_clear = QPushButton("✕")
         self.btn_clear.setFixedSize(16, 16)
+        self.btn_clear.setCursor(Qt.PointingHandCursor)
         self.btn_clear.setStyleSheet("background-color: transparent; border: none; color: #999999;")
         self.btn_clear.clicked.connect(self.clear_shortcut)
         btn_layout.addWidget(self.btn_clear)
@@ -224,19 +230,32 @@ class WinResizerPreferences(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("마그넷 환경설정")
-        self.setFixedSize(450, 600)
+        self.setFixedSize(450, 750) # 항목이 늘어나 세로 크기 조정
         self.setStyleSheet("background-color: #3a363a;")
 
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 20, 0, 20)
-        main_layout.setSpacing(8)
+        main_vbox = QVBoxLayout(self)
+        main_vbox.setContentsMargins(0, 0, 0, 0)
+
+        # 스크롤 영역 추가 (항목이 많을 경우 대비)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: #3a363a; }")
+        
+        scroll_content = QWidget()
+        scroll_content.setStyleSheet("background-color: #3a363a;")
+        self.content_layout = QVBoxLayout(scroll_content)
+        self.content_layout.setContentsMargins(0, 20, 0, 20)
+        self.content_layout.setSpacing(8)
 
         for label in HOTKEY_CONFIG.keys():
             row = ShortcutRow(label, label, self.listener_thread)
-            main_layout.addWidget(row)
+            self.content_layout.addWidget(row)
 
-        main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        self.add_checkboxes(main_layout)
+        self.content_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.add_checkboxes(self.content_layout)
+        
+        scroll.setWidget(scroll_content)
+        main_vbox.addWidget(scroll)
 
     def add_checkboxes(self, layout):
         checkbox_frame = QFrame()
