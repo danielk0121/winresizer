@@ -58,6 +58,13 @@ def load_config():
                         if k in config_data['shortcuts']:
                             if isinstance(v, dict):
                                 config_data['shortcuts'][k].update(v)
+                                # 과거 데이터 마이그레이션: pynput을 기반으로 display 형식을 강제 재조정
+                                pk = config_data['shortcuts'][k].get('pynput', '')
+                                if pk:
+                                    # <ctrl>+<alt>+k -> ctrl + alt + k
+                                    config_data['shortcuts'][k]['display'] = pk.replace('<', '').replace('>', '').replace('+', ' + ')
+                                else:
+                                    config_data['shortcuts'][k]['display'] = "단축키 입력"
                             else:
                                 logging.warning(f"단축키 설정 '{k}'의 형식이 올바르지 않습니다.")
                 

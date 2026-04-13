@@ -204,7 +204,35 @@ class WinResizerPreferences(QWidget):
             self.scroll_layout.addLayout(row)
         scroll.setWidget(scroll_content); layout.addWidget(scroll)
         
+        # 모든 단축키 삭제 버튼 추가 (사용자 요청 사항)
+        btn_clear_all = QPushButton("모든 단축키 삭제")
+        btn_clear_all.setStyleSheet("""
+            QPushButton {
+                background-color: #c0392b;
+                color: white;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #e74c3c;
+            }
+        """)
+        btn_clear_all.clicked.connect(self.clear_all_shortcuts)
+        layout.addWidget(btn_clear_all)
+        
         btn_quit = QPushButton("앱 종료"); btn_quit.clicked.connect(QApplication.instance().quit); layout.addWidget(btn_quit)
+
+    def clear_all_shortcuts(self):
+        """모든 단축키 설정을 초기화합니다."""
+        from PyQt5.QtWidgets import QMessageBox
+        reply = QMessageBox.question(self, '확인', '정말 모든 단축키를 삭제하시겠습니까?',
+                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        
+        if reply == QMessageBox.Yes:
+            for k in list(HOTKEY_CONFIG.keys()):
+                self.update_hotkey(k, "")
+            logging.info("모든 단축키가 초기화되었습니다.")
 
     def update_hotkey(self, k, pk):
         logging.info(f"단축키 갱신 요청: {k} -> {pk}")
@@ -258,9 +286,36 @@ class HotkeyButton(QPushButton):
         
         parts, d_parts = [], []
         mods = event.modifiers()
-        if mods & Qt.ControlModifier: parts.append('<ctrl>'); d_parts.append('⌃')
-        if mods & Qt.AltModifier: parts.append('<alt>'); d_parts.append('⌥')
-        if mods & Qt.MetaModifier: parts.append('<cmd>'); d_parts.append('⌘')
+        import sys
+        
+        # macOS 등 플랫폼별 Modifier 인식 버그 수정 (사용자 보고 기반: Ctrl/Cmd 반전 현상)
+        if sys.platform == 'darwin':
+            # 사용자 보고: macOS에서 Ctrl을 누르면 cmd가, Cmd를 누르면 ctrl이 찍힘
+            # 따라서 Qt가 반대로 보고하는 경우를 대비해 매핑을 보정함
+            if mods & Qt.ControlModifier: 
+                parts.append('<cmd>')
+                d_parts.append('⌘')
+            if mods & Qt.MetaModifier: 
+                parts.append('<ctrl>')
+                d_parts.append('⌃')
+        else:
+            # 타 플랫폼(Windows/Linux)은 표준 매핑 사용
+            if mods & Qt.ControlModifier: 
+                parts.append('<ctrl>')
+                d_parts.append('⌃')
+            if mods & Qt.MetaModifier: 
+                parts.append('<cmd>')
+                d_parts.append('⌘')
+
+        # 2. Alt (Option) 키 처리 (공통)
+        if mods & Qt.AltModifier: 
+            parts.append('<alt>')
+            d_parts.append('⌥')
+        
+        # 3. Shift 키 처리 (공통)
+        if mods & Qt.ShiftModifier:
+            parts.append('<shift>')
+            d_parts.append('⇧')
         
         k = event.key()
         kn = {Qt.Key_Left:'left', Qt.Key_Right:'right', Qt.Key_Up:'up', Qt.Key_Down:'down'}.get(k, chr(k).lower() if 32 <= k <= 126 else None)

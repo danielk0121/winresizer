@@ -14,6 +14,7 @@ from AppKit import NSWorkspace
 from coordinate_calculator import calculate_window_position
 from monitor_info import get_all_monitors_info
 from window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
+import config_manager
 
 # 로깅 설정
 LOG_DIR = "log"
@@ -35,6 +36,10 @@ logging.basicConfig(
 def execute_command(mode):
     logging.info(f"--- [명령 실행: {mode}] ---")
     
+    # 0. 설정 로드 (간격 등)
+    config_manager.load_config()
+    gap = config_manager.get_setting("gap", 0)
+
     # 1. 권한 확인
     if not is_accessibility_trusted():
         logging.error("macOS '접근성(Accessibility)' 권한이 없습니다!")
@@ -68,8 +73,8 @@ def execute_command(mode):
     logging.info(f"대상 모니터: {target_monitor}")
     screen_size = (target_monitor['width'], target_monitor['height'])
     
-    # 5. 새로운 좌표 계산
-    x_rel, y_rel, width, height = calculate_window_position(screen_size, mode)
+    # 5. 새로운 좌표 계산 (간격 반영)
+    x_rel, y_rel, width, height = calculate_window_position(screen_size, mode, gap=gap)
     
     # 모니터 절대 좌표로 변환
     final_x = x_rel + target_monitor['x']
@@ -86,9 +91,10 @@ if __name__ == "__main__":
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind(('localhost', 9999))
+            # 모든 인터페이스에서 대기하여 IPv4/IPv6 혼선 방지
+            s.bind(('0.0.0.0', 9999))
             s.listen()
-            logging.info("CLI 테스트 전용 소켓 서버 시작됨 (Port: 9999)")
+            logging.info("CLI 테스트 전용 소켓 서버 시작됨 (Port: 9999, Bind: 0.0.0.0)")
             while True:
                 conn, addr = s.accept()
                 with conn:
