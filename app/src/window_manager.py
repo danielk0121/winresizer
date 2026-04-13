@@ -14,6 +14,30 @@ from ApplicationServices import (
 )
 from Quartz.CoreGraphics import CGPointMake, CGSizeMake, CGPoint, CGSize
 
+# 윈도우 객체별 원래 상태 저장소 (복구용)
+# 메모리 누수 방지를 위해 실제 서비스에서는 정리가 필요할 수 있으나, 현재는 딕셔너리로 관리
+_window_history = {}
+
+def save_window_state(window_object, bounds):
+    """
+    윈도우의 현재 상태를 이력에 저장합니다. (이미 저장된 경우 무시하여 최초 상태 유지)
+    """
+    if window_object not in _window_history:
+        _window_history[window_object] = bounds
+
+def get_saved_window_state(window_object):
+    """
+    저장된 윈도우의 원래 상태를 반환합니다.
+    """
+    return _window_history.get(window_object)
+
+def clear_window_state(window_object):
+    """
+    윈도우의 저장된 상태를 삭제합니다.
+    """
+    if window_object in _window_history:
+        del _window_history[window_object]
+
 def is_accessibility_trusted():
     """
     현재 프로세스가 접근성(Accessibility) 권한을 가지고 있는지 확인합니다.

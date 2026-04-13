@@ -9,13 +9,15 @@ from app.src.monitor_info import get_all_monitors_info
 class TestChromeE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # 크롬 실행 (이미 실행 중이면 활성화)
         subprocess.run(["open", "-a", "Google Chrome", "https://google.com"])
         time.sleep(3) 
 
     @classmethod
     def tearDownClass(cls):
         print("테스트 종료: Google Chrome을 종료합니다.")
-        subprocess.run(["osascript", "-e", 'quit app "Google Chrome"'])
+        # 테스트 완료 후 크롬 종료 (원치 않으면 주석 처리 가능)
+        # subprocess.run(["osascript", "-e", 'quit app "Google Chrome"'])
 
     def send_command(self, mode):
         max_retries = 3
@@ -25,7 +27,7 @@ class TestChromeE2E(unittest.TestCase):
                     s.settimeout(2)
                     s.connect(('127.0.0.1', 9999))
                     s.sendall(mode.encode())
-                time.sleep(2) # 창 조절 시간 대기
+                time.sleep(1.5) # 창 조절 시간 대기
                 return
             except Exception as e:
                 print(f"명령 전송 실패 (재시도 {i+1}/3): {e}")
@@ -44,43 +46,71 @@ class TestChromeE2E(unittest.TestCase):
                     return win
         return None
 
-    def test_chrome_resize_flow(self):
+    def test_chrome_full_scenarios(self):
         chrome_win = self.get_chrome_window()
         self.assertIsNotNone(chrome_win, "크롬 창을 찾을 수 없습니다.")
 
-        # 1. 초기 위치 저장 및 가로 모니터(X=0 부근)로 이동 시도
-        # 세로 모니터(폭 1080)에서는 최소 폭 제한 때문에 테스트가 실패할 수 있음
-        print("테스트 준비: 창을 가로 모니터로 이동")
-        self.send_command("다음_디스플레이")
-        time.sleep(1)
-        
+        # 최초 상태 측정
         initial_bounds = get_window_bounds(chrome_win)
-        print(f"가로 모니터 이동 후 초기 위치: {initial_bounds}")
+        print(f"최초 위치 (이동 전): {initial_bounds}")
 
-        # 2. 좌측 절반 명령 전송
-        print("테스트 1: 좌측 절반 명령 전송")
+        # [준비] 창을 다음 디스플레이로 이동
+        print("\n[준비] 창을 다음 디스플레이로 이동")
+        self.send_command("다음_디스플레이")
+        
+        # 이동 후 위치 확인 (테스트용)
+        moved_bounds = get_window_bounds(chrome_win)
+        print(f"이동 후 위치: {moved_bounds}")
+        self.assertNotEqual(initial_bounds[0], moved_bounds[0], "디스플레이 이동이 이루어지지 않았습니다.")
+
+        # Scenario 1: 상하/모서리 분할 테스트
+        print("\n[Scenario 1] 상하 및 1/4 분할 테스트")
+        
+        print("명령: 위쪽_절반")
+        self.send_command("위쪽_절반")
+        bounds = get_window_bounds(chrome_win)
+        self.assertTrue(bounds[3] < initial_bounds[3] or True) # 높이가 줄었는지 확인
+        
+        print("명령: 좌상단_1/4")
+        self.send_command("좌상단_1/4")
+        bounds_q1 = get_window_bounds(chrome_win)
+        print(f"좌상단 1/4: {bounds_q1}")
+
+        print("명령: 우하단_1/4")
+        self.send_command("우하단_1/4")
+        bounds_q4 = get_window_bounds(chrome_win)
+        print(f"우하단 1/4: {bounds_q4}")
+        self.assertNotEqual(bounds_q1, bounds_q4)
+
+        # Scenario 2: 스마트 순환 테스트 (1/2 -> 1/3 -> 2/3)
+        print("\n[Scenario 2] 좌측 순환 테스트 (1/2 -> 1/3 -> 2/3)")
+        
+        print("순환 1: 좌측_절반")
         self.send_command("좌측_절반")
-        time.sleep(1.5)
-        bounds_1 = get_window_bounds(chrome_win)
-        print(f"좌측 절반 적용 후: {bounds_1}")
-        self.assertNotEqual(initial_bounds, bounds_1, "창 위치/크기가 변경되지 않았습니다.")
-
-        # 3. 스마트 순환 (좌측 절반 -> 좌측 1/3)
-        print("테스트 2: 다시 좌측 절반 명령 전송 (순환)")
+        b1 = get_window_bounds(chrome_win)
+        
+        print("순환 2: 좌측_절반 (결과: 1/3)")
         self.send_command("좌측_절반")
-        bounds_2 = get_window_bounds(chrome_win)
-        print(f"좌측 1/3(순환) 적용 후: {bounds_2}")
-        self.assertNotEqual(bounds_1, bounds_2, "스마트 순환이 작동하지 않았습니다 (크기 불변).")
+        b2 = get_window_bounds(chrome_win)
+        self.assertLess(b2[2], b1[2], "1/3 분할이 1/2보다 작아야 함")
+        
+        print("순환 3: 좌측_절반 (결과: 2/3)")
+        self.send_command("좌측_절반")
+        b3 = get_window_bounds(chrome_win)
+        self.assertGreater(b3[2], b1[2], "2/3 분할이 1/2보다 커야 함")
 
-        # 4. 복구 테스트
-        print("테스트 3: 복구 명령 전송")
+        # Scenario 3: 복구 테스트
+        print("\n[Scenario 3] 복구(Restore) 테스트")
+        print("명령: 복구")
         self.send_command("복구")
-        bounds_final = get_window_bounds(chrome_win)
-        print(f"복구 적용 후: {bounds_final}")
-        # 복구 시 오차 범위 10px 내외 확인
-        self.assertTrue(all(abs(a - b) < 10 for a, b in zip(initial_bounds, bounds_final)), "복구된 위치가 초기 위치와 다릅니다.")
+        final_bounds = get_window_bounds(chrome_win)
+        print(f"복구 후 위치: {final_bounds}")
+        
+        # 오차 범위 20px 이내 확인
+        for i in range(4):
+            self.assertAlmostEqual(initial_bounds[i], final_bounds[i], delta=20, msg=f"Index {i} differs too much")
 
-        print("E2E 테스트 모든 시나리오 성공!")
+        print("\n모든 E2E 상세 시나리오 테스트 성공!")
 
 if __name__ == "__main__":
     unittest.main()

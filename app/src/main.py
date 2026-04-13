@@ -8,7 +8,10 @@ from AppKit import NSWorkspace
 from pynput import keyboard
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
+from app.src.window_manager import (
+    get_active_window_object, set_window_bounds, get_window_bounds, 
+    is_accessibility_trusted, save_window_state, get_saved_window_state, clear_window_state
+)
 
 # 로깅 설정
 LOG_DIR = "log"
@@ -40,14 +43,29 @@ def execute_command(mode):
         logging.error("macOS 접근성 권한이 없습니다!")
         return
         
-    monitors = get_all_monitors_info()
     target_window = get_active_window_object()
     if not target_window: return
         
     current_bounds = get_window_bounds(target_window)
     if not current_bounds: return
-    
+
+    # 1. 복구 명령 처리
+    if mode == "복구":
+        saved_state = get_saved_window_state(target_window)
+        if saved_state:
+            logging.info(f"원래 상태로 복구 시도: {saved_state}")
+            set_window_bounds(target_window, *saved_state)
+            clear_window_state(target_window)
+        else:
+            logging.info("저장된 원래 상태가 없습니다.")
+        return
+
+    # 2. 다른 명령 실행 전 현재 상태 저장 (최초 1회)
+    save_window_state(target_window, current_bounds)
+
+    monitors = get_all_monitors_info()
     cx, cy = current_bounds[0] + current_bounds[2] // 2, current_bounds[1] + current_bounds[3] // 2
+    
     target_monitor = monitors[0]
     for m in monitors:
         if m['x'] <= cx < m['x'] + m['width'] and m['y'] <= cy < m['y'] + m['height']:
@@ -71,12 +89,23 @@ def execute_command(mode):
         return apply_gap(*res, gap)
 
     next_mode = mode
+    # 스마트 순환 로직
     if mode == "좌측_절반":
-        if is_nearly_equal(local_bounds, get_gap_pos("좌측_절반")): next_mode = "좌측_1/3"
-        elif is_nearly_equal(local_bounds, get_gap_pos("좌측_1/3")): next_mode = "좌측_2/3"
+        half_pos = get_gap_pos("좌측_절반")
+        third_pos = get_gap_pos("좌측_1/3")
+        logging.info(f"순환 체크 - 현재: {local_bounds}, 1/2기준: {half_pos}, 1/3기준: {third_pos}")
+        if is_nearly_equal(local_bounds, half_pos): 
+            next_mode = "좌측_1/3"
+        elif is_nearly_equal(local_bounds, third_pos): 
+            next_mode = "좌측_2/3"
     elif mode == "우측_절반":
-        if is_nearly_equal(local_bounds, get_gap_pos("우측_절반")): next_mode = "우측_1/3"
-        elif is_nearly_equal(local_bounds, get_gap_pos("우측_1/3")): next_mode = "우측_2/3"
+        half_pos = get_gap_pos("우측_절반")
+        third_pos = get_gap_pos("우측_1/3")
+        logging.info(f"순환 체크 - 현재: {local_bounds}, 1/2기준: {half_pos}, 1/3기준: {third_pos}")
+        if is_nearly_equal(local_bounds, half_pos): 
+            next_mode = "우측_1/3"
+        elif is_nearly_equal(local_bounds, third_pos): 
+            next_mode = "우측_2/3"
 
     res_coords = calculate_window_position(screen_size, next_mode)
     x_rel, y_rel, w, h = apply_gap(*res_coords, gap)
@@ -105,6 +134,7 @@ if __name__ == "__main__":
     with keyboard.GlobalHotKeys({
         '<ctrl>+<alt>+<cmd>+<left>': lambda: execute_command('좌측_절반'),
         '<ctrl>+<alt>+<cmd>+<right>': lambda: execute_command('우측_절반'),
-        '<ctrl>+<alt>+<cmd>+<up>': lambda: execute_command('다음_디스플레이')
+        '<ctrl>+<alt>+<cmd>+<up>': lambda: execute_command('다음_디스플레이'),
+        '<ctrl>+<alt>+<cmd>+r': lambda: execute_command('복구')
     }) as h:
         h.join()
