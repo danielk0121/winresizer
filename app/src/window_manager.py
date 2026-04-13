@@ -1,14 +1,13 @@
 from AppKit import NSWorkspace
-from Quartz import (
+from ApplicationServices import (
     AXUIElementCreateApplication, 
     AXUIElementCopyAttributeValue, 
     AXUIElementSetAttributeValue,
     kAXFocusedWindowAttribute,
     kAXPositionAttribute,
-    kAXSizeAttribute,
-    CGPointMake,
-    CGSizeMake
+    kAXSizeAttribute
 )
+from Quartz.CoreGraphics import CGPointMake, CGSizeMake
 
 def get_active_window_object():
     """
