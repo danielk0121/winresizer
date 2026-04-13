@@ -1,7 +1,7 @@
 from pynput import keyboard
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds
+from app.src.window_manager import get_active_window_object, set_window_bounds, is_accessibility_trusted
 
 # 전역 단축키 설정 (Option + Command 조합)
 HOTKEY_MAPPING = {
@@ -46,6 +46,15 @@ def setup_hotkeys():
     """
     pynput Global Hotkey 핸들러를 생성합니다.
     """
+    if not is_accessibility_trusted():
+        print("=" * 60)
+        print("오류: macOS '접근성(Accessibility)' 권한이 없습니다!")
+        print("1. [시스템 설정 > 개인정보 보호 및 보안 > 접근성]으로 이동합니다.")
+        print("2. 현재 실행 중인 '터미널' 또는 'iTerm2'의 스위치를 켭니다.")
+        print("   (이미 켜져 있다면 껐다가 다시 켜보세요.)")
+        print("=" * 60)
+        return
+
     with keyboard.GlobalHotKeys({
         key: lambda m=mode: execute_command(m) for key, mode in HOTKEY_MAPPING.items()
     }) as h:
