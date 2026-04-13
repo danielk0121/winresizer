@@ -161,15 +161,76 @@ class HotkeyListenerThread(QThread):
 class WinResizerPreferences(QWidget):
     def __init__(self):
         super().__init__()
-        self.ht = HotkeyListenerThread(); self.ht.start()
+        self.ht = HotkeyListenerThread()
+        self.ht.start()
         self.cs = CommandServerThread()
         self.cs.commandReceived.connect(execute_window_command)
         self.cs.start()
         self.init_ui()
+
     def init_ui(self):
-        self.setWindowTitle("WinResizer Preferences"); self.setFixedSize(400, 300); self.setStyleSheet("background-color: #3a363a;")
-        v = QVBoxLayout(self); v.addWidget(QLabel("WinResizer 실행 중 (E2E 테스트 대기)", styleSheet="color:white;font-size:16px;alignment:center"))
-        btn_quit = QPushButton("앱 종료"); btn_quit.clicked.connect(self.close); v.addWidget(btn_quit)
+        self.setWindowTitle("WinResizer 설정")
+        self.setMinimumSize(400, 500)
+        self.setStyleSheet("background-color: #2b2b2b; color: #ffffff;")
+
+        layout = QVBoxLayout(self)
+        
+        # 제목
+        title = QLabel("WinResizer 설정")
+        title.setFont(QFont("Arial", 18, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("margin-bottom: 20px; color: #00aaff;")
+        layout.addWidget(title)
+
+        # 간격(Gap) 설정
+        gap_layout = QHBoxLayout()
+        gap_label = QLabel("창 간격 (Gap):")
+        gap_label.setFont(QFont("Arial", 12))
+        
+        self.gap_spin = QSpinBox()
+        self.gap_spin.setRange(0, 100)
+        self.gap_spin.setValue(SETTINGS.get('gap', 5))
+        self.gap_spin.setSuffix(" px")
+        self.gap_spin.setStyleSheet("""
+            QSpinBox {
+                background-color: #3c3f41;
+                border: 1px solid #555555;
+                border-radius: 4px;
+                padding: 5px;
+                min-width: 80px;
+            }
+        """)
+        self.gap_spin.valueChanged.connect(self.update_gap)
+        
+        gap_layout.addWidget(gap_label)
+        gap_layout.addWidget(self.gap_spin)
+        gap_layout.addStretch()
+        layout.addLayout(gap_layout)
+
+        layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        # 종료 버튼
+        btn_quit = QPushButton("앱 종료")
+        btn_quit.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                border: none;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+        btn_quit.clicked.connect(QApplication.instance().quit)
+        layout.addWidget(btn_quit)
+
+    def update_gap(self, value):
+        SETTINGS['gap'] = value
+        save_config(CONFIG)
+        logging.info(f"창 간격 설정 변경: {value}px")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
