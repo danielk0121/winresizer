@@ -63,13 +63,24 @@ class TestChromeE2E(unittest.TestCase):
         print(f"이동 후 위치: {moved_bounds}")
         self.assertNotEqual(initial_bounds[0], moved_bounds[0], "디스플레이 이동이 이루어지지 않았습니다.")
 
-        # Scenario 1: 상하 분할 테스트
-        print("\n[Scenario 1] 상하 분할 테스트")
+        # Scenario 1: 상하/모서리 분할 테스트
+        print("\n[Scenario 1] 상하 및 1/4 분할 테스트")
         
         print("명령: 위쪽_절반")
         self.send_command("위쪽_절반")
         bounds = get_window_bounds(chrome_win)
         self.assertTrue(bounds[3] < initial_bounds[3] or True) # 높이가 줄었는지 확인
+        
+        print("명령: 좌상단_1/4")
+        self.send_command("좌상단_1/4")
+        bounds_q1 = get_window_bounds(chrome_win)
+        print(f"좌상단 1/4: {bounds_q1}")
+
+        print("명령: 우하단_1/4")
+        self.send_command("우하단_1/4")
+        bounds_q4 = get_window_bounds(chrome_win)
+        print(f"우하단 1/4: {bounds_q4}")
+        self.assertNotEqual(bounds_q1, bounds_q4)
 
         # Scenario 2: 스마트 순환 테스트 (1/2 -> 1/3 -> 2/3)
         print("\n[Scenario 2] 좌측 순환 테스트 (1/2 -> 1/3 -> 2/3)")

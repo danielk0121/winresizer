@@ -14,6 +14,16 @@ def calculate_window_position(screen_size, mode):
     if mode == "아래쪽_절반":
         return (0, screen_height // 2, screen_width, screen_height // 2)
 
+    # 1/4 분할 (모서리)
+    if mode == "좌상단_1/4":
+        return (0, 0, screen_width // 2, screen_height // 2)
+    if mode == "우상단_1/4":
+        return (screen_width // 2, 0, screen_width // 2, screen_height // 2)
+    if mode == "좌하단_1/4":
+        return (0, screen_height // 2, screen_width // 2, screen_height // 2)
+    if mode == "우하단_1/4":
+        return (screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2)
+
     # 1/2 분할 (절반)
 
     if mode == "좌측_1/3":
