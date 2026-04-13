@@ -1,7 +1,7 @@
 from pynput import keyboard
-from app.src.좌표_계산기 import 창_위치_계산
-from app.src.모니터_정보 import 모든_모니터_정보_가져오기
-from app.src.창_관리자 import 활성_윈도우_객체_가져오기, 윈도우_크기_및_위치_변경
+from app.src.coordinate_calculator import 창_위치_계산
+from app.src.monitor_info import 모든_모니터_정보_가져오기
+from app.src.window_manager import 활성_윈도우_객체_가져오기, 윈도우_크기_및_위치_변경
 
 # 전역 단축키 설정 (Option + Command 조합)
 단축키_매핑 = {

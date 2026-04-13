@@ -1,5 +1,5 @@
 import unittest
-from app.src.좌표_계산기 import 창_위치_계산
+from app.src.coordinate_calculator import 창_위치_계산
 
 class 좌표_계산기_테스트(unittest.TestCase):
     def test_좌측_절반_분할_계산(self):
