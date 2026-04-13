@@ -2,7 +2,9 @@ import json
 import os
 import logging
 
-CONFIG_FILE = os.path.join("config", "config.json")
+# 현재 파일(config_manager.py)의 위치를 기준으로 절대 경로 설정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 
 def ensure_config_dir():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
@@ -47,15 +49,26 @@ def load_config():
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                # 이전 버전 호환성 처리
-                if 'shortcuts' in loaded:
-                    config_data['shortcuts'].update(loaded['shortcuts'])
-                else:
-                    # 구버전 구조인 경우 shortcuts로 간주
-                    config_data['shortcuts'].update(loaded)
                 
+                # 단축키 설정 로드 및 필터링 (현재 정의된 기능만 유지)
+                loaded_shortcuts = loaded.get('shortcuts', loaded if 'shortcuts' not in loaded else {})
+                filtered_shortcuts = {
+                    k: v for k, v in loaded_shortcuts.items() 
+                    if k in DEFAULT_CONFIG
+                }
+                config_data['shortcuts'].update(filtered_shortcuts)
+                
+                # 기타 설정 로드
                 if 'settings' in loaded:
-                    config_data['settings'].update(loaded['settings'])
+                    # DEFAULT_SETTINGS에 정의된 키들만 유지하도록 필터링
+                    filtered_settings = {
+                        k: v for k, v in loaded['settings'].items()
+                        if k in DEFAULT_SETTINGS
+                    }
+                    config_data['settings'].update(filtered_settings)
+                
+                # 필터링된 결과를 파일에 즉시 반영 (삭제된 항목 정리)
+                save_config(config_data)
                 return config_data
         except Exception as e:
             logging.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
