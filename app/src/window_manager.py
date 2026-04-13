@@ -78,7 +78,11 @@ def set_window_bounds(window_object, x, y, width, height):
     res_size = AXUIElementSetAttributeValue(window_object, kAXSizeAttribute, ax_size)
     
     if res_pos != 0 or res_size != 0:
-        # 0이 아니면 실패 (macOS 에러 코드)
+        # 0이 아니면 실패 (kAXErrorSuccess = 0)
+        # 34: kAXErrorCannotComplete (권한 문제 또는 창이 응답 없음)
+        # -25204: kAXErrorAttributeUnsupported
+        import logging
+        logging.error(f"[API 오류] 위치설정: {res_pos}, 크시설정: {res_size} (창: {window_object})")
         return False
         
     return True
