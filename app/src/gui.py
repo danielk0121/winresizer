@@ -157,7 +157,7 @@ class WinResizerPreferences(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("WinResizer 설정"); self.setMinimumSize(450, 600); self.setStyleSheet("background-color: #2b2b2b; color: white;")
+        self.setWindowTitle("WinResizer 설정"); self.setMinimumSize(450, 850); self.setStyleSheet("background-color: #2b2b2b; color: white;")
         layout = QVBoxLayout(self)
         
         # 간격 설정
@@ -166,7 +166,11 @@ class WinResizerPreferences(QWidget):
         layout.addWidget(QLabel("창 간격 (Gap):")); layout.addWidget(self.gap_spin)
 
         # 단축키 목록
-        scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll_content = QWidget(); self.scroll_layout = QVBoxLayout(scroll_content)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame) # 테두리 제거로 더 깔끔하게
+        scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(scroll_content)
         for name, cfg in HOTKEY_CONFIG.items():
             row = QHBoxLayout()
             label = QLabel(name)
