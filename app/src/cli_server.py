@@ -3,10 +3,17 @@ import socket
 import logging
 import os
 import datetime
+
+# 1. 파일 위치를 기준으로 sys.path 설정
+current_file_path = os.path.abspath(__file__)
+src_dir = os.path.dirname(current_file_path)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 from AppKit import NSWorkspace
-from app.src.coordinate_calculator import calculate_window_position
-from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
+from coordinate_calculator import calculate_window_position
+from monitor_info import get_all_monitors_info
+from window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
 
 # 로깅 설정
 LOG_DIR = "log"

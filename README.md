@@ -39,16 +39,16 @@ pip install -r app/requirements.txt
 ```
 
 ### 2. 앱 실행
-가상 환경의 파이썬 인터프리터를 사용하여 `app/src/main.py`를 실행합니다.
+가상 환경의 파이썬 인터프리터를 사용하여 실행합니다.
 ```bash
-PYTHONPATH=app/src app/venv/bin/python3 app/src/main.py
+app/venv/bin/python3 app/src/main.py
 ```
 
 #### 상세 실행 옵션
-- **GUI 설정 창 (기본)**: 위 명령어를 통해 실행하며, 백그라운드 리스너가 함께 동작합니다.
-- **CLI 리스너 전용 (선택 사항)**: GUI 없이 단축키 리스너만 실행하려면 아래 명령을 사용합니다.
+- **GUI 설정 창 (기본)**: `app/src/main.py`를 실행하며, 백그라운드 리스너가 함께 동작합니다.
+- **CLI 리스너 전용 (선택 사항)**: GUI 없이 리스너만 실행하려면 `app/src/cli.py` 또는 `app/src/cli_server.py`를 실행합니다.
   ```bash
-  PYTHONPATH=app/src app/venv/bin/python3 app/src/cli.py
+  app/venv/bin/python3 app/src/cli.py
   ```
 
 ## 사용 가능한 단축키
