@@ -1,68 +1,100 @@
+import sys
+import socket
+import logging
+import threading
+import time
+from AppKit import NSWorkspace
 from pynput import keyboard
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds, is_accessibility_trusted
+from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
 
-# 전역 단축키 설정 (Option + Command 조합)
-HOTKEY_MAPPING = {
-    '<alt>+<cmd>+<left>': '좌측_절반',
-    '<alt>+<cmd>+<right>': '우측_절반',
-    '<alt>+<cmd>+c': '중앙_고정'
-}
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 def execute_command(mode):
-    """
-    지정된 모드에 따라 현재 활성 창의 크기를 조정합니다.
-    """
-    print(f"[{mode}] 명령 실행 시도 중...")
+    logging.info(f"--- [명령 실행: {mode}] ---")
     
-    # 1. 모니터 정보 가져오기 (첫 번째 모니터 기준 우선 구현)
+    if not is_accessibility_trusted():
+        logging.error("macOS 접근성(Accessibility) 권한이 없습니다! 시스템 설정에서 터미널의 권한을 확인해 주세요.")
+        return
+
     monitors = get_all_monitors_info()
-    if not monitors:
-        print("모니터 정보를 가져올 수 없습니다.")
+    target_window = get_active_window_object()
+    if not target_window:
+        logging.error("활성 창을 찾을 수 없습니다. (현재 앱: %s)" % NSWorkspace.sharedWorkspace().frontmostApplication().localizedName())
         return
         
-    main_monitor = monitors[0] # 실제로는 창이 위치한 모니터를 찾아야 함
-    screen_size = (main_monitor['width'], main_monitor['height'])
+    current_bounds = get_window_bounds(target_window)
+    if not current_bounds:
+        logging.error("현재 창의 좌표를 가져올 수 없습니다.")
+        return
     
-    # 2. 새로운 좌표 계산
-    x, y, width, height = calculate_window_position(screen_size, mode)
-    
-    # macOS 좌표 보정 (모니터 원점 기준)
-    x += main_monitor['x']
-    # macOS Quartz API는 화면 상단이 0이므로 별도의 Y축 반전 보정이 필요할 수 있음
-    # 여기서는 간단히 origin.y를 더함
-    y += main_monitor['y']
-
-    # 3. 활성 창 제어
-    target_window = get_active_window_object()
-    if target_window:
-        set_window_bounds(target_window, x, y, width, height)
-        print(f"창 크기 조정 완료: {width}x{height} @ ({x}, {y})")
-    else:
-        print("활성 창을 찾을 수 없습니다. (접근성 권한이 필요합니다)")
-
-def setup_hotkeys():
-    """
-    pynput Global Hotkey 핸들러를 생성합니다.
-    """
-    if not is_accessibility_trusted():
-        print("=" * 60)
-        print("오류: macOS '접근성(Accessibility)' 권한이 없습니다!")
-        print("1. [시스템 설정 > 개인정보 보호 및 보안 > 접근성]으로 이동합니다.")
-        print("2. 현재 실행 중인 '터미널' 또는 'iTerm2'의 스위치를 켭니다.")
-        print("   (이미 켜져 있다면 껐다가 다시 켜보세요.)")
-        print("=" * 60)
+    # 모니터 판별
+    cx, cy = current_bounds[0] + current_bounds[2] // 2, current_bounds[1] + current_bounds[3] // 2
+    target_monitor = monitors[0]
+    for m in monitors:
+        if m['x'] <= cx < m['x'] + m['width'] and m['y'] <= cy < m['y'] + m['height']:
+            target_monitor = m
+            break
+            
+    # 디스플레이 이동 처리
+    if mode == "다음_디스플레이":
+        idx = monitors.index(target_monitor)
+        nm = monitors[(idx + 1) % len(monitors)]
+        new_x = nm['x'] + (current_bounds[0] - target_monitor['x'])
+        new_y = nm['y'] + (current_bounds[1] - target_monitor['y'])
+        set_window_bounds(target_window, new_x, new_y, min(current_bounds[2], nm['width']), min(current_bounds[3], nm['height']))
+        logging.info(f"디스플레이 이동 시도: {idx} -> {(idx+1)%len(monitors)}")
         return
 
-    with keyboard.GlobalHotKeys({
-        key: lambda m=mode: execute_command(m) for key, mode in HOTKEY_MAPPING.items()
-    }) as h:
-        print("윈도우 리사이저 실행 중... (Ctrl+C로 종료)")
-        h.join()
+    screen_size = (target_monitor['width'], target_monitor['height'])
+    x_rel, y_rel, w, h = calculate_window_position(screen_size, mode)
+    
+    final_x = x_rel + target_monitor['x']
+    final_y = y_rel + target_monitor['y']
+
+    logging.info(f"적용 좌표: ({final_x}, {final_y}, {w}, {h})")
+    if set_window_bounds(target_window, final_x, final_y, w, h):
+        logging.info("성공!")
+    else:
+        logging.error("실패!")
+
+def server_loop():
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(('localhost', 9999))
+            s.listen()
+            logging.info("CLI 소켓 서버 대기 중 (Port: 9999)...")
+            while True:
+                conn, _ = s.accept()
+                with conn:
+                    data = conn.recv(1024).decode().strip()
+                    if data:
+                        logging.info(f"[네트워크 명령 수신] {data}")
+                        # 메인 스레드가 아니어도 CLI 환경에서는 직접 실행 가능
+                        execute_command(data)
+    except Exception as e:
+        logging.error(f"서버 오류: {e}")
 
 if __name__ == "__main__":
+    # 소켓 서버를 별도 스레드에서 시작
+    threading.Thread(target=server_loop, daemon=True).start()
+    
+    # 단축키 리스너 (강력한 조합: Ctrl+Alt+Cmd+방향키)
+    logging.info("윈도우 리사이저 실행 중 (Ctrl+C로 종료)...")
     try:
-        setup_hotkeys()
+        with keyboard.GlobalHotKeys({
+            '<ctrl>+<alt>+<cmd>+<left>': lambda: execute_command('좌측_절반'),
+            '<ctrl>+<alt>+<cmd>+<right>': lambda: execute_command('우측_절반'),
+            '<ctrl>+<alt>+<cmd>+<up>': lambda: execute_command('다음_디스플레이'),
+            '<ctrl>+<alt>+<cmd>+c': lambda: execute_command('중앙_고정')
+        }) as h:
+            h.join()
     except KeyboardInterrupt:
-        print("\n프로그램을 종료합니다.")
+        logging.info("종료 중...")
