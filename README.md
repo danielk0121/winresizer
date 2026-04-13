@@ -30,7 +30,7 @@ python3 -m venv app/venv
 
 # 의존성 설치
 source app/venv/bin/activate
-pip install pynput pyobjc-core pyobjc-framework-Cocoa pyobjc-framework-Quartz
+pip install -r requirements.txt
 ```
 
 ### 2. 앱 실행
