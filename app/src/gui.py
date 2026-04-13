@@ -2,6 +2,7 @@ import sys
 import socket
 import logging
 import os
+import datetime
 from AppKit import NSWorkspace
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -19,11 +20,16 @@ from app.src.config_manager import load_config, save_config
 # 로깅 설정
 LOG_DIR = "log"
 if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
+
+# yyyyMMdd_HHmmss KST 형식의 타임스탬프 생성
+kst_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+log_filename = f"winresizer_{kst_now}_KST.log"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join(LOG_DIR, "winresizer.log"), encoding='utf-8'),
+        logging.FileHandler(os.path.join(LOG_DIR, log_filename), encoding='utf-8'),
         logging.StreamHandler(sys.stdout)
     ]
 )

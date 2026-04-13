@@ -1,16 +1,28 @@
 import sys
 import socket
 import logging
+import os
+import datetime
 from AppKit import NSWorkspace
 from app.src.coordinate_calculator import calculate_window_position
 from app.src.monitor_info import get_all_monitors_info
 from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
 
-# 로깅 설정 (표준 출력)
+# 로깅 설정
+LOG_DIR = "log"
+if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
+
+# yyyyMMdd_HHmmss KST 형식의 타임스탬프 생성
+kst_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+log_filename = f"winresizer_{kst_now}_KST.log"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[
+        logging.FileHandler(os.path.join(LOG_DIR, log_filename), encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
 def execute_command(mode):
