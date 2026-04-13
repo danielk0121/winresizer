@@ -3,7 +3,11 @@
 윈도우 창 크기 조절기 프로젝트입니다.
 
 ## 프로젝트 구조
-- **app**: 앱 소스코드 및 테스트 코드 (`src`, `tests`, `venv`)
+- **app**: 앱 소스코드 및 테스트 코드
+    - `src/gui.py`: 메인 GUI 설정 앱 및 백그라운드 서버
+    - `src/cli.py`: 단축키 기반 리스너 및 CLI 명령 서버 (Legacy)
+    - `tests/`: E2E 및 단위 테스트 코드
+    - `requirements.txt`: 의존성 목록
 - **config**: 애플리케이션 설정 파일 (`config.json`) 저장
 - **doc**: 설계 문서, 작업 목록 (TODO) 및 배포 계획서 (`todo_배포_및_설치.md`)
 - **log**: 앱 실행 중 발생하는 로그 파일 저장
@@ -35,11 +39,20 @@ pip install -r app/requirements.txt
 
 ### 2. 앱 실행
 가상 환경의 파이썬 인터프리터를 사용하여 실행합니다.
+
+#### GUI 설정 창 (메인)
+설정 창이 실행되면 백그라운드 리스너와 명령 서버가 함께 동작합니다.
 ```bash
 PYTHONPATH=. app/venv/bin/python3 app/src/gui.py
 ```
 
-### 3. 사용 가능한 단축키
+#### CLI 리스너 전용 (선택 사항)
+GUI 없이 단축키 리스너만 실행하려면 아래 명령을 사용합니다.
+```bash
+PYTHONPATH=. app/venv/bin/python3 app/src/cli.py
+```
+
+## 사용 가능한 단축키
 기본적으로 아래의 단축키가 설정되어 있으며, GUI에서 변경 가능합니다.
 
 | 분류 | 기능 | 단축키 |
@@ -53,7 +66,7 @@ PYTHONPATH=. app/venv/bin/python3 app/src/gui.py
 | | 최대화 / 복구(Restore) | (GUI 설정 필요) |
 | | 다음 / 이전 디스플레이 이동 | (GUI 설정 필요) |
 
-### 4. 필수 권한 설정 (macOS)
+## 필수 권한 설정 (macOS)
 앱이 정상적으로 창을 제어하기 위해 다음 권한 허용이 필요합니다:
 1. **시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용 (Accessibility)**: 실행 중인 앱(예: 터미널) 권한 허용.
 2. **시스템 설정 > 개인정보 보호 및 보안 > 입력 모니터링 (Input Monitoring)**: 백그라운드 키보드 감지를 위해 권한 허용.
