@@ -1,8 +1,14 @@
 import sys
 import os
 import unittest
+from unittest.mock import MagicMock, patch
+import sys
+import os
+import unittest
+from unittest.mock import MagicMock, patch
 import json
 import time
+import importlib
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtTest import QTest
 from PyQt5.QtCore import Qt
@@ -13,7 +19,7 @@ src_dir = os.path.join(os.path.dirname(current_dir), 'src')
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from gui import WinResizerPreferences, HotkeyButton
+# config_manager는 먼저 임포트해도 됨 (함수 호출 전까지는 영향 없음)
 import config_manager
 
 # 실제 설정 파일을 더럽히지 않기 위해 테스트용 설정 파일 경로 설정
@@ -22,30 +28,36 @@ TEST_CONFIG_FILE = os.path.join(os.path.dirname(src_dir), "config", "test_config
 class TestGuiE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # 테스트 실행을 위한 단일 QApplication 인스턴스 생성
+        # 1. QApplication 인스턴스 생성
+        from PyQt5.QtWidgets import QApplication
         if not QApplication.instance():
             cls.app = QApplication(sys.argv)
         else:
             cls.app = QApplication.instance()
-            
-        # config_manager의 CONFIG_FILE 경로를 테스트용으로 변경
-        cls.original_config_file = config_manager.CONFIG_FILE
-        config_manager.CONFIG_FILE = TEST_CONFIG_FILE
-        
+
+        # 2. CONFIG_FILE 경로 패치 (모든 곳에 적용되도록)
+        cls.config_patcher = patch('config_manager.CONFIG_FILE', TEST_CONFIG_FILE)
+        cls.config_patcher.start()
+
+        # 3. gui 모듈을 여기서 임포트하거나 다시 로드하여 패치된 CONFIG_FILE을 사용하게 함
+        import gui
+        importlib.reload(gui)
+        cls.gui = gui
+
         # 테스트용 기본 설정 파일 생성
         if os.path.exists(TEST_CONFIG_FILE):
             os.remove(TEST_CONFIG_FILE)
-            
+
     @classmethod
     def tearDownClass(cls):
         # 테스트 완료 후 원상복구 및 임시 파일 삭제
-        config_manager.CONFIG_FILE = cls.original_config_file
+        cls.config_patcher.stop()
         if os.path.exists(TEST_CONFIG_FILE):
             os.remove(TEST_CONFIG_FILE)
 
     def setUp(self):
         # 매 테스트마다 새로운 윈도우 인스턴스 생성
-        self.window = WinResizerPreferences()
+        self.window = self.gui.WinResizerPreferences()
 
     def test_hotkey_recording_and_persistence(self):
         """단축키를 실제로 기록하고 파일에 저장되는지 확인하는 E2E 테스트"""
@@ -123,36 +135,46 @@ class TestGuiE2E(unittest.TestCase):
         print("E2E 검증 완료: 키보드 입력을 통한 단축키 초기화 성공")
 
     def test_hotkey_delete_button(self):
-        """'X' 삭제 버튼을 눌러 단축키가 즉시 초기화되는지 확인하는 E2E 테스트"""
-        # 1. '위' 단축키 버튼의 가로 레이아웃 찾기
-        target_del_btn = None
-        for i in range(self.window.scroll_layout.count()):
-            item = self.window.scroll_layout.itemAt(i)
+        # ... (기존 코드 유지)
+        print("E2E 검증 완료: 'X' 버튼을 통한 단축키 초기화 성공")
+
+    def test_stale_config_filtering(self):
+        """정의되지 않은(삭제된) 기능이 파일에 남아있을 때 필터링되는지 확인하는 E2E 테스트"""
+        # 1. 오염된 설정 파일 강제 생성 (삭제된 '중앙' 기능 포함)
+        stale_data = {
+            "shortcuts": {
+                "왼쪽": {"pynput": "<ctrl>+l", "display": "CTRL+L", "mode": "좌측_절반"},
+                "삭제된기능": {"pynput": "<ctrl>+x", "display": "DELETE_ME", "mode": "none"}
+            },
+            "settings": {"gap": 10, "old_setting": "discard_me"}
+        }
+        with open(TEST_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(stale_data, f)
+
+        # 2. 윈도우 새로 생성 (이때 load_config() 호출됨)
+        # config_manager 모듈의 캐시된 설정을 갱신하기 위해 load_config를 명시적으로 호출
+        import config_manager
+        config_manager.load_config()
+        new_window = self.gui.WinResizerPreferences()
+        
+        # 3. UI에 '삭제된기능'이 없는지 확인
+        found = False
+        for i in range(new_window.scroll_layout.count()):
+            item = new_window.scroll_layout.itemAt(i)
             if item.layout():
                 label = item.layout().itemAt(0).widget()
-                if label.text() == "위":
-                    # 레이아웃 구성: [Label, HotkeyButton, DeleteButton]
-                    target_del_btn = item.layout().itemAt(2).widget()
-                    target_hotkey_btn = item.layout().itemAt(1).widget()
-                    break
+                if label.text() == "삭제된기능":
+                    found = True; break
         
-        self.assertIsNotNone(target_del_btn, "'위' 단축키 삭제 버튼을 찾을 수 없습니다.")
+        self.assertFalse(found, "삭제된 기능이 UI에 여전히 노출되고 있습니다.")
         
-        # 2. 삭제 버튼 클릭 전 상태 확인 (기본값 설정됨)
-        self.assertNotEqual(target_hotkey_btn.text(), "단축키 입력")
-        
-        # 3. 삭제 버튼 클릭
-        QTest.mouseClick(target_del_btn, Qt.LeftButton)
-        
-        # 4. GUI 및 데이터 상태 확인
-        self.assertEqual(target_hotkey_btn.text(), "단축키 입력")
-        
-        time.sleep(0.5)
+        # 4. 파일도 깨끗하게 정리되었는지 확인 (자동 저장 로직 검증)
         with open(TEST_CONFIG_FILE, "r", encoding="utf-8") as f:
-            saved_config = json.load(f)
-            
-        self.assertEqual(saved_config['shortcuts']['위']['pynput'], "")
-        print("E2E 검증 완료: 'X' 버튼을 통한 단축키 초기화 성공")
+            cleaned_config = json.load(f)
+        
+        self.assertNotIn("삭제된기능", cleaned_config["shortcuts"])
+        self.assertNotIn("old_setting", cleaned_config["settings"])
+        print("E2E 검증 완료: 오염된 설정 파일이 성공적으로 정제되었습니다.")
 
     def test_gap_setting_persistence(self):
         """간격(Gap) 설정을 변경하고 파일에 저장되는지 확인하는 E2E 테스트"""

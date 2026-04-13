@@ -40,6 +40,7 @@ DEFAULT_SETTINGS = {
 
 def load_config():
     """파일에서 설정을 불러옵니다. 파일이 없으면 기본값을 반환합니다."""
+    # 1. 기본값으로 초기화
     config_data = {
         'shortcuts': DEFAULT_CONFIG.copy(),
         'settings': DEFAULT_SETTINGS.copy()
@@ -50,28 +51,29 @@ def load_config():
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
                 
-                # 단축키 설정 로드 및 필터링 (현재 정의된 기능만 유지)
+                # 2. 단축키 설정 로드 (파일에 있는 값 중 유효한 것만 취함)
                 loaded_shortcuts = loaded.get('shortcuts', loaded if 'shortcuts' not in loaded else {})
-                filtered_shortcuts = {
-                    k: v for k, v in loaded_shortcuts.items() 
-                    if k in DEFAULT_CONFIG
-                }
-                config_data['shortcuts'].update(filtered_shortcuts)
+                if isinstance(loaded_shortcuts, dict):
+                    for k, v in loaded_shortcuts.items():
+                        if k in config_data['shortcuts']:
+                            if isinstance(v, dict):
+                                config_data['shortcuts'][k].update(v)
+                            else:
+                                logging.warning(f"단축키 설정 '{k}'의 형식이 올바르지 않습니다.")
                 
-                # 기타 설정 로드
-                if 'settings' in loaded:
-                    # DEFAULT_SETTINGS에 정의된 키들만 유지하도록 필터링
-                    filtered_settings = {
-                        k: v for k, v in loaded['settings'].items()
-                        if k in DEFAULT_SETTINGS
-                    }
-                    config_data['settings'].update(filtered_settings)
+                # 3. 기타 설정 로드
+                loaded_settings = loaded.get('settings', {})
+                if isinstance(loaded_settings, dict):
+                    for k, v in loaded_settings.items():
+                        if k in DEFAULT_SETTINGS:
+                            config_data['settings'][k] = v
                 
-                # 필터링된 결과를 파일에 즉시 반영 (삭제된 항목 정리)
+                # 4. 필터링된 결과를 파일에 즉시 반영 (삭제된 항목 영구 제거)
                 save_config(config_data)
-                return config_data
+                
         except Exception as e:
             logging.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
+            
     return config_data
 
 def save_config(config):
