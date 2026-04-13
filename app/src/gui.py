@@ -12,10 +12,10 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
 
 from pynput import keyboard
-from app.src.coordinate_calculator import calculate_window_position
-from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
-from app.src.config_manager import load_config, save_config
+from coordinate_calculator import calculate_window_position
+from monitor_info import get_all_monitors_info
+from window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
+from config_manager import load_config, save_config
 
 # 로깅 설정
 LOG_DIR = "log"

@@ -6,9 +6,9 @@ import os
 import datetime
 from AppKit import NSWorkspace
 from pynput import keyboard
-from app.src.coordinate_calculator import calculate_window_position
-from app.src.monitor_info import get_all_monitors_info
-from app.src.window_manager import (
+from coordinate_calculator import calculate_window_position
+from monitor_info import get_all_monitors_info
+from window_manager import (
     get_active_window_object, set_window_bounds, get_window_bounds, 
     is_accessibility_trusted, save_window_state, get_saved_window_state, clear_window_state
 )

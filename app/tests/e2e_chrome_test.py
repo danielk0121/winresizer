@@ -3,8 +3,8 @@ import time
 import subprocess
 import unittest
 from AppKit import NSWorkspace
-from app.src.window_manager import get_window_bounds
-from app.src.monitor_info import get_all_monitors_info
+from window_manager import get_window_bounds
+from monitor_info import get_all_monitors_info
 
 class TestChromeE2E(unittest.TestCase):
     @classmethod
