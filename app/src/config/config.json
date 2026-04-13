@@ -1,23 +1,23 @@
 {
     "shortcuts": {
         "왼쪽": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<ctrl>+l",
+            "display": "ctrl + l",
             "mode": "좌측_절반"
         },
         "오른쪽": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<shift>+<right>",
+            "display": "cmd + alt + shift + right",
             "mode": "우측_절반"
         },
         "위": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<shift>+<up>",
+            "display": "cmd + alt + shift + up",
             "mode": "위쪽_절반"
         },
         "아래": {
-            "pynput": "",
-            "display": "단축키 입력",
+            "pynput": "<cmd>+<alt>+<shift>+<down>",
+            "display": "cmd + alt + shift + down",
             "mode": "아래쪽_절반"
         },
         "좌상단 1/4": {

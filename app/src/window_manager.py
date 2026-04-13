@@ -111,6 +111,19 @@ def set_window_bounds(window_object, x, y, width, height):
         
     return True
 
+def activate_application(pid):
+    """
+    주어진 PID를 가진 애플리케이션을 최상위로 올리고 포커스를 부여합니다.
+    창 이동 후 포커스가 유실되는 현상을 방지하기 위해 사용합니다.
+    """
+    from AppKit import NSRunningApplication, NSApplicationActivateIgnoringOtherApps
+    app = NSRunningApplication.runningApplicationWithProcessIdentifier_(pid)
+    if app:
+        # NSApplicationActivateIgnoringOtherApps (2) 옵션으로 강제 활성화
+        app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps)
+        return True
+    return False
+
 if __name__ == "__main__":
     if is_accessibility_trusted():
         target = get_active_window_object()

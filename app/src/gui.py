@@ -16,7 +16,10 @@ from PyQt5.QtGui import QFont
 from pynput import keyboard
 from coordinate_calculator import calculate_window_position
 from monitor_info import get_all_monitors_info
-from window_manager import get_active_window_object, set_window_bounds, get_window_bounds, is_accessibility_trusted
+from window_manager import (
+    get_active_window_object, set_window_bounds, get_window_bounds, 
+    is_accessibility_trusted, activate_application
+)
 from config_manager import load_config, save_config
 
 # 로깅 설정
@@ -100,6 +103,14 @@ def execute_window_command(mode):
         res_coords = calculate_window_position(screen_size, next_mode)
         x_rel, y_rel, w, h = apply_gap(*res_coords, gap)
         set_window_bounds(target_window, x_rel + m['x'], y_rel + m['y'], w, h)
+        
+        # [수정] 창 이동 후 포커스가 유실되는 현상을 방지하기 위해 강제 재활성화
+        try:
+            pid = active_app.processIdentifier()
+            activate_application(pid)
+        except:
+            pass
+            
         logging.info(f"명령 실행 완료: {next_mode}")
     except Exception as e: 
         logging.error(f"명령 실행 중 예외 발생: {e}", exc_info=True)
@@ -113,24 +124,34 @@ class HotkeyListenerThread(QThread):
         
         current_keys = set()
         
+        last_trigger_time = 0
+
         def on_press(key):
+            nonlocal last_trigger_time
             if GLOBAL_RECORDING:
-                return # 녹화 중일 때는 전역 단축키 처리 안 함
+                return
                 
             try:
                 k = key.char.lower() if hasattr(key, 'char') and key.char else str(key).replace('Key.', '')
                 current_keys.add(k)
                 
-                # 매번 모든 키 입력을 HOTKEY_CONFIG와 대조
+                now = time.time()
                 for cfg in HOTKEY_CONFIG.values():
                     pynput_str = cfg['pynput']
                     if not pynput_str: continue
                     
                     required = set(pynput_str.replace('<', '').replace('>', '').split('+'))
                     if required.issubset(current_keys):
-                        logging.debug(f"단축키 감지됨: {pynput_str}")
-                        execute_window_command(cfg['mode'])
-                        current_keys.clear()
+                        # 너무 빠른 연속 트리거 방지 (0.2초 쿨다운)
+                        if now - last_trigger_time > 0.2:
+                            logging.debug(f"단축키 감지됨: {pynput_str}")
+                            execute_window_command(cfg['mode'])
+                            last_trigger_time = now
+                        
+                        # [중요] 모든 키를 지우지 않고, 수식 키가 아닌 키만 제거하여 연속 입력 지원
+                        # 혹은 수식 키를 제외한 세트만 유지
+                        modifiers = {'ctrl', 'alt', 'cmd', 'shift', 'ctrl_l', 'ctrl_r', 'alt_l', 'alt_r', 'cmd_l', 'cmd_r', 'shift_l', 'shift_r'}
+                        current_keys.intersection_update(modifiers)
                         break
             except Exception as e:
                 logging.error(f"on_press 오류: {e}")
