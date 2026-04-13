@@ -301,7 +301,33 @@ class WinResizerPreferences(QWidget):
         gap_layout.addStretch()
         settings_layout.addLayout(gap_layout)
         
-        main_layout.addWidget(settings_frame)
+        # 제외 앱 설정 영역
+        ignore_frame = QFrame()
+        ignore_frame.setStyleSheet("background-color: #333333; border-radius: 8px; margin: 5px; padding: 10px;")
+        ignore_layout = QVBoxLayout(ignore_frame)
+        
+        ignore_title = QLabel("제외 앱 리스트 (단축키 무시):")
+        ignore_title.setFont(QFont("Arial", 11, QFont.Bold))
+        ignore_layout.addWidget(ignore_title)
+        
+        add_layout = QHBoxLayout()
+        self.ignore_input = QLineEdit()
+        self.ignore_input.setPlaceholderText("앱 이름 입력 (예: Photoshop)")
+        self.ignore_input.setStyleSheet("background-color: #3c3f41; padding: 5px;")
+        
+        btn_add = QPushButton("추가")
+        btn_add.setStyleSheet("background-color: #00aaff; color: white; padding: 5px; font-weight: bold;")
+        btn_add.clicked.connect(self.add_ignore_app)
+        
+        add_layout.addWidget(self.ignore_input)
+        add_layout.addWidget(btn_add)
+        ignore_layout.addLayout(add_layout)
+        
+        self.ignore_list_layout = QVBoxLayout()
+        self.refresh_ignore_list()
+        ignore_layout.addLayout(self.ignore_list_layout)
+        
+        main_layout.addWidget(ignore_frame)
 
         # 단축키 설정 영역 (Scroll Area)
         scroll = QScrollArea()
@@ -342,6 +368,48 @@ class WinResizerPreferences(QWidget):
         """)
         btn_quit.clicked.connect(QApplication.instance().quit)
         main_layout.addWidget(btn_quit)
+
+    def add_ignore_app(self):
+        app_name = self.ignore_input.text().strip()
+        if app_name and app_name not in SETTINGS['ignore_apps']:
+            SETTINGS['ignore_apps'].append(app_name)
+            save_config(CONFIG)
+            self.ignore_input.clear()
+            self.refresh_ignore_list()
+            logging.info(f"제외 앱 추가: {app_name}")
+
+    def remove_ignore_app(self, app_name):
+        if app_name in SETTINGS['ignore_apps']:
+            SETTINGS['ignore_apps'].remove(app_name)
+            save_config(CONFIG)
+            self.refresh_ignore_list()
+            logging.info(f"제외 앱 삭제: {app_name}")
+
+    def refresh_ignore_list(self):
+        # 기존 항목 제거
+        for i in reversed(range(self.ignore_list_layout.count())):
+            item = self.ignore_list_layout.itemAt(i)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                # 레이아웃 내부 위젯들 삭제
+                for j in reversed(range(item.layout().count())):
+                    w = item.layout().itemAt(j).widget()
+                    if w: w.deleteLater()
+                self.ignore_list_layout.removeItem(item)
+
+        # 리스트 갱신
+        for app in SETTINGS.get('ignore_apps', []):
+            row = QHBoxLayout()
+            row.addWidget(QLabel(app))
+            
+            btn_del = QPushButton("X")
+            btn_del.setFixedSize(20, 20)
+            btn_del.setStyleSheet("background-color: #e74c3c; color: white; border-radius: 10px; font-size: 10px;")
+            btn_del.clicked.connect(lambda checked, a=app: self.remove_ignore_app(a))
+            
+            row.addWidget(btn_del)
+            self.ignore_list_layout.addLayout(row)
 
     def update_gap(self, value):
         SETTINGS['gap'] = value
