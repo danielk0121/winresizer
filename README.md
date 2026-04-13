@@ -3,7 +3,6 @@
 윈도우 창 크기 조절기 프로젝트입니다.
 
 ## 프로젝트 구조
-- `main.py`: 프로젝트 루트의 메인 진입점 (app/src/main.py 호출)
 - **app**: 앱 소스코드 및 테스트 코드
     - `src/main.py`: 메인 GUI 설정 앱 진입점
     - `src/gui.py`: GUI 위젯 및 백그라운드 서버 로직
@@ -40,16 +39,16 @@ pip install -r app/requirements.txt
 ```
 
 ### 2. 앱 실행
-가상 환경의 파이썬 인터프리터를 사용하여 루트 폴더의 `main.py`를 실행합니다.
+가상 환경의 파이썬 인터프리터를 사용하여 `app/src/main.py`를 실행합니다.
 ```bash
-app/venv/bin/python3 main.py
+PYTHONPATH=app/src app/venv/bin/python3 app/src/main.py
 ```
 
 #### 상세 실행 옵션
 - **GUI 설정 창 (기본)**: 위 명령어를 통해 실행하며, 백그라운드 리스너가 함께 동작합니다.
 - **CLI 리스너 전용 (선택 사항)**: GUI 없이 단축키 리스너만 실행하려면 아래 명령을 사용합니다.
   ```bash
-  PYTHONPATH=. app/venv/bin/python3 app/src/cli.py
+  PYTHONPATH=app/src app/venv/bin/python3 app/src/cli.py
   ```
 
 ## 사용 가능한 단축키
