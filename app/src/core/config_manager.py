@@ -2,90 +2,91 @@ import json
 import os
 from utils.logger import logger
 
-# .app 번들 실행 시에도 안전하게 사용자 홈 기준 경로 사용
+# 사용자 설정 파일 경로 (~/Library/Application Support/WinResizer/config.json)
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
+
+# 기본값 파일 경로 (앱 번들 및 일반 실행 모두 대응)
+_SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_CONFIG_FILE = os.path.join(_SRC_DIR, "config", "default-config.json")
+
+_default_config_cache = None
+_config_cache = None
+
 
 def ensure_config_dir():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
-DEFAULT_CONFIG = {
-    'Left': {'pynput': '<alt>+<cmd>+<shift>+<left>', 'display': 'alt + cmd + shift + left', 'mode': 'left_half'},
-    'Right': {'pynput': '<alt>+<cmd>+<shift>+<right>', 'display': 'alt + cmd + shift + right', 'mode': 'right_half'},
-    'Top': {'pynput': '<alt>+<cmd>+<shift>+<up>', 'display': 'alt + cmd + shift + up', 'mode': 'top_half'},
-    'Bottom': {'pynput': '<alt>+<cmd>+<shift>+<down>', 'display': 'alt + cmd + shift + down', 'mode': 'bottom_half'},
-    'Top Left 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_left_1/4'},
-    'Top Right 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_right_1/4'},
-    'Bottom Left 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'bottom_left_1/4'},
-    'Bottom Right 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'bottom_right_1/4'},
-    'Left 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'left_1/3'},
-    'Center 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'center_1/3'},
-    'Right 1/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_1/3'},
-    'Left 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'left_2/3'},
-    'Right 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_2/3'},
-    'Maximize': {'pynput': '', 'display': '단축키 입력', 'mode': 'maximize'},
-    'Restore': {'pynput': '', 'display': '단축키 입력', 'mode': 'restore'},
-    'Left Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': 'ctrl + alt + cmd + left', 'mode': 'left_custom:90'},
-    'Right Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<right>', 'display': 'ctrl + alt + cmd + right', 'mode': 'right_custom:90'},
-    'Top Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<up>', 'display': 'ctrl + alt + cmd + up', 'mode': 'top_custom:90'},
-    'Bottom Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<down>', 'display': 'ctrl + alt + cmd + down', 'mode': 'bottom_custom:90'},
-}
 
-# 기본 시스템 설정 (간격 등)
-DEFAULT_SETTINGS = {
-    'gap': 5,
-    'login_launch': True,
-    'auto_layouts': {
-        'Slack': '우측_1/3',
-        'iTerm2': '좌측_2/3'
-    },
-    'ignore_apps': ['Photoshop', 'Final Cut Pro', 'Steam']
-}
+def load_default_config():
+    """default-config.json을 읽어 반환합니다."""
+    global _default_config_cache
+    if _default_config_cache is not None:
+        return _default_config_cache
+    try:
+        with open(DEFAULT_CONFIG_FILE, "r", encoding="utf-8") as f:
+            _default_config_cache = json.load(f)
+        logger.debug(f"기본 설정 파일 로드: {DEFAULT_CONFIG_FILE}")
+    except Exception as e:
+        logger.error(f"기본 설정 파일 로드 실패: {e}")
+        _default_config_cache = {'shortcuts': {}, 'settings': {}}
+    return _default_config_cache
 
-_config_cache = None
+
+def _deep_copy_default():
+    """default-config의 깊은 복사본을 반환합니다."""
+    default = load_default_config()
+    return {
+        'shortcuts': {k: dict(v) for k, v in default.get('shortcuts', {}).items()},
+        'settings': dict(default.get('settings', {})),
+    }
+
 
 def load_config():
-    """파일에서 설정을 불러옵니다. 파일이 없으면 기본값을 반환합니다."""
+    """사용자 config.json을 읽어 default-config 위에 덮어씌워 반환합니다.
+    사용자 파일이 없으면 기본값을 그대로 반환합니다."""
     global _config_cache
     # 1. 기본값으로 초기화
-    config_data = {
-        'shortcuts': DEFAULT_CONFIG.copy(),
-        'settings': DEFAULT_SETTINGS.copy()
-    }
-    
+    config_data = _deep_copy_default()
+    default_shortcuts = load_default_config().get('shortcuts', {})
+    default_settings = load_default_config().get('settings', {})
+
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                
-                # 2. 단축키 설정 로드 (파일에 있는 값 중 유효한 것만 취함)
-                loaded_shortcuts = loaded.get('shortcuts', loaded if 'shortcuts' not in loaded else {})
-                if isinstance(loaded_shortcuts, dict):
-                    for k, v in loaded_shortcuts.items():
-                        if k in config_data['shortcuts']:
-                            if isinstance(v, dict):
-                                config_data['shortcuts'][k].update(v)
-                                # 과거 데이터 마이그레이션: pynput을 기반으로 display 형식을 강제 재조정
-                                pk = config_data['shortcuts'][k].get('pynput', '')
-                                if pk:
-                                    # <ctrl>+<alt>+k -> ctrl + alt + k
-                                    config_data['shortcuts'][k]['display'] = pk.replace('<', '').replace('>', '').replace('+', ' + ')
-                                else:
-                                    config_data['shortcuts'][k]['display'] = "단축키 입력"
-                            else:
-                                logger.warning(f"단축키 설정 '{k}'의 형식이 올바르지 않습니다.")
-                
-                # 3. 기타 설정 로드
-                loaded_settings = loaded.get('settings', {})
-                if isinstance(loaded_settings, dict):
-                    for k, v in loaded_settings.items():
-                        if k in DEFAULT_SETTINGS:
-                            config_data['settings'][k] = v
-                
+
+            # 2. 단축키 설정 로드 — 사용자 값이 있으면 덮어씀
+            loaded_shortcuts = loaded.get('shortcuts', {})
+            if isinstance(loaded_shortcuts, dict):
+                for k, v in loaded_shortcuts.items():
+                    if k not in config_data['shortcuts']:
+                        continue
+                    if not isinstance(v, dict):
+                        logger.warning(f"단축키 설정 '{k}'의 형식이 올바르지 않습니다.")
+                        continue
+                    user_pynput = v.get('pynput', '')
+                    if user_pynput:
+                        # 사용자가 직접 설정한 단축키 적용
+                        config_data['shortcuts'][k].update(v)
+                        config_data['shortcuts'][k]['display'] = user_pynput.replace('<', '').replace('>', '').replace('+', ' + ')
+                    else:
+                        # pynput이 비어있으면 기본값 단축키 유지, mode는 사용자 값 적용 (비율 등)
+                        if 'mode' in v:
+                            config_data['shortcuts'][k]['mode'] = v['mode']
+
+            # 3. 기타 설정 로드
+            loaded_settings = loaded.get('settings', {})
+            if isinstance(loaded_settings, dict):
+                for k, v in loaded_settings.items():
+                    if k in default_settings:
+                        config_data['settings'][k] = v
+
         except Exception as e:
             logger.error(f"설정 파일을 불러오는 중 오류 발생: {e}")
-    
+
     _config_cache = config_data
     return config_data
+
 
 def get_config():
     """캐시된 설정을 반환하거나, 없으면 새로 불러옵니다."""
@@ -94,6 +95,7 @@ def get_config():
         return load_config()
     return _config_cache
 
+
 def get_setting(key, default=None):
     """지정된 설정값을 반환합니다. 캐시가 없으면 로드합니다."""
     global _config_cache
@@ -101,8 +103,9 @@ def get_setting(key, default=None):
         load_config()
     return _config_cache.get('settings', {}).get(key, default)
 
+
 def save_config(config):
-    """현재 설정을 파일에 저장합니다."""
+    """현재 설정을 사용자 config.json에 저장합니다."""
     ensure_config_dir()
     try:
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -111,11 +114,11 @@ def save_config(config):
     except Exception as e:
         logger.error(f"설정 저장 중 오류 발생: {e}")
 
+
 def save_server_port(port):
     """Flask 서버 실행 포트를 설정 파일의 runtime 섹션에 기록합니다."""
     ensure_config_dir()
     try:
-        # 기존 파일 내용 보존 후 runtime.port만 갱신
         data = {}
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:

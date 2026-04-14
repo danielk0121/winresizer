@@ -51,10 +51,7 @@ def create_app():
     @app.route('/api/config/reset', methods=['POST'])
     def reset_config():
         """설정을 기본값으로 초기화합니다. 리스너는 다음 키 입력 시 자동으로 새 설정을 반영합니다."""
-        default = {
-            'shortcuts': {k: dict(v) for k, v in config_manager.DEFAULT_CONFIG.items()},
-            'settings': dict(config_manager.DEFAULT_SETTINGS),
-        }
+        default = config_manager._deep_copy_default()
         config_manager.save_config(default)
         config_manager._config_cache = None
         logger.info("설정 기본값 초기화 완료")
