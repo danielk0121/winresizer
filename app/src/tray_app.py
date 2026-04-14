@@ -6,9 +6,6 @@ from utils.helpers import get_resource_path
 from web_server import run_server, open_browser
 from core.hotkey_listener import HotkeyListenerThread
 
-WEB_PORT = 5000
-
-
 class TrayApp(rumps.App):
     """
     macOS 메뉴바 트레이 앱.
@@ -31,8 +28,8 @@ class TrayApp(rumps.App):
         self.listener = HotkeyListenerThread()
         self.listener.start()
 
-        # Flask 웹 서버 시작
-        self.flask_app = run_server(port=WEB_PORT, listener=self.listener)
+        # Flask 웹 서버 시작 (40000번대 랜덤 포트)
+        self.flask_app, self.web_port = run_server(listener=self.listener)
 
     def _check_permissions(self):
         if not ApplicationServices.AXIsProcessTrusted():
@@ -41,7 +38,7 @@ class TrayApp(rumps.App):
 
     def open_settings(self, _):
         """브라우저로 설정 페이지 오픈"""
-        open_browser(port=WEB_PORT)
+        open_browser(port=self.web_port)
 
     def quit_app(self, _):
         """앱 종료"""

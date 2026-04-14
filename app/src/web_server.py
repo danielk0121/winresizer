@@ -1,5 +1,7 @@
 import threading
 import webbrowser
+import socket
+import random
 from flask import Flask, jsonify, request, render_template_string
 from core import config_manager
 from core.hotkey_listener import HotkeyListenerThread
@@ -197,6 +199,26 @@ def create_app():
     def get_config():
         return jsonify(config_manager.load_config())
 
+    @app.route('/api/execute', methods=['POST'])
+    def execute_command():
+        """창 조절 명령을 즉시 실행하는 API (E2E 테스트 및 외부 트리거용)"""
+        data = request.get_json(silent=True)
+        if not data or 'mode' not in data:
+            return jsonify({'error': 'mode 필드가 필요합니다.'}), 400
+        from core.window_controller import execute_window_command
+        execute_window_command(data['mode'])
+        return jsonify({'status': 'ok', 'mode': data['mode']})
+
+    @app.route('/api/execute', methods=['GET'])
+    def execute_command_get():
+        """창 조절 명령 GET 버전 (테스트 편의용)"""
+        mode = request.args.get('mode')
+        if not mode:
+            return jsonify({'error': 'mode 파라미터가 필요합니다.'}), 400
+        from core.window_controller import execute_window_command
+        execute_window_command(mode)
+        return jsonify({'status': 'ok', 'mode': mode})
+
     @app.route('/api/config', methods=['POST'])
     def post_config():
         data = request.get_json(silent=True)
@@ -220,8 +242,20 @@ def create_app():
     return app
 
 
-def run_server(port=5000, listener=None):
-    """Flask 서버를 백그라운드 스레드로 실행"""
+def find_free_port(start=40000, end=49999):
+    """40000–49999 범위에서 사용 가능한 랜덤 포트 반환"""
+    while True:
+        port = random.randint(start, end)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('127.0.0.1', port)) != 0:
+                return port
+
+
+def run_server(port=None, listener=None):
+    """Flask 서버를 백그라운드 스레드로 실행. port=None 이면 40000번대 랜덤 포트 사용."""
+    if port is None:
+        port = find_free_port()
+
     app = create_app()
     app.config['listener'] = listener
 
@@ -231,8 +265,8 @@ def run_server(port=5000, listener=None):
     )
     server_thread.start()
     logger.info(f"웹 서버 시작: http://127.0.0.1:{port}")
-    return app
+    return app, port
 
 
-def open_browser(port=5000):
+def open_browser(port):
     webbrowser.open(f'http://127.0.0.1:{port}')

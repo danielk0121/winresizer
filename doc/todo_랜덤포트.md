@@ -14,12 +14,12 @@
 ## 작업 계획 (TODO)
 
 - [x] todo 문서 작성
-- [ ] `web_server.py`: `run_server()` 포트 0 바인딩으로 실제 할당 포트 반환 방식 구현
-- [ ] `tray_app.py`: `WEB_PORT` 상수 제거, 앱 시작 시 40000–49999 범위 랜덤 포트 선택
-- [ ] `open_browser()` 호출 시 실제 할당된 포트 전달
-- [ ] README.md 포트 관련 설명 업데이트 (고정 5000 → 랜덤)
-- [ ] 기존 테스트 영향 없는지 확인 (테스트는 TEST_PORT=15001 고정 사용 중)
-- [ ] 커밋 푸시
+- [x] `web_server.py`: `find_free_port()` 추가, `run_server()` 포트 미지정 시 랜덤 할당, `(app, port)` 튜플 반환
+- [x] `tray_app.py`: `WEB_PORT` 상수 제거, `self.web_port`에 할당된 포트 저장
+- [x] `open_browser()` 호출 시 실제 할당된 포트 전달
+- [x] README.md 포트 관련 설명 업데이트 (고정 5000 → 랜덤)
+- [x] 기존 테스트 15개 통과 확인
+- [x] 커밋 푸시
 
 ## 구현 방식
 

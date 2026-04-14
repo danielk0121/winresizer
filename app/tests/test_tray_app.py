@@ -29,8 +29,9 @@ class TestTrayApp(unittest.TestCase):
         """설정 열기 시 브라우저가 열리는지 확인"""
         from tray_app import TrayApp
         app = TrayApp.__new__(TrayApp)
+        app.web_port = 42000  # 랜덤 포트 mock
         app.open_settings(None)
-        mock_browser.assert_called_once()
+        mock_browser.assert_called_once_with(port=42000)
 
 
 if __name__ == '__main__':
