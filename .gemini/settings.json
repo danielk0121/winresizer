@@ -14,7 +14,7 @@
         "modelConfig": {
           "generateContentConfig": {
             "thinkingConfig": {
-              "thinkingBudget": 10000
+              "thinkingLevel": "MEDIUM"
             }
           }
         }
@@ -28,7 +28,7 @@
           "model": "gemini-3.1-flash-lite-preview",
           "generateContentConfig": {
             "thinkingConfig": {
-              "thinkingBudget": 4000
+              "thinkingLevel": "MEDIUM"
             }
           }
         }
@@ -38,7 +38,7 @@
           "model": "gemini-3-flash-preview",
           "generateContentConfig": {
             "thinkingConfig": {
-              "thinkingBudget": 10000
+              "thinkingLevel": "MEDIUM"
             }
           }
         }
@@ -49,10 +49,10 @@
           "maxTurns": 30
         },
         "modelConfig": {
-          "model": "gemini-3-pro",
+          "model": "gemini-3.1-pro-preview",
           "generateContentConfig": {
             "thinkingConfig": {
-              "thinkingBudget": 15000
+              "thinkingLevel": "HIGH"
             }
           }
         }
