@@ -1,6 +1,6 @@
 from utils.logger import logger
 import time
-from PyQt5.QtCore import QThread
+import threading
 from pynput import keyboard
 from core.window_manager import is_accessibility_trusted
 from core.window_controller import execute_window_command
@@ -9,10 +9,18 @@ from core import config_manager
 # Status flag for hotkey recording (shared with GUI)
 RECORDING_STATUS = {'is_recording': False}
 
-class HotkeyListenerThread(QThread):
+class HotkeyListenerThread(threading.Thread):
     """
     Background thread that detects global hotkeys.
     """
+    def __init__(self):
+        super().__init__()
+        self.daemon = True
+        self._stop_event = threading.Event()
+
+    def stop(self):
+        self._stop_event.set()
+
     def run(self):
         logger.info("Starting hotkey listener thread")
         if not is_accessibility_trusted():
@@ -73,6 +81,9 @@ class HotkeyListenerThread(QThread):
         logger.info("Hotkey engine running")
         try:
             with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-                listener.join()
+                while not self._stop_event.is_set():
+                    listener.join(timeout=0.5)
+                    if not listener.is_alive():
+                        break
         except Exception as e:
             logger.error(f"Fatal error in listener: {e}", exc_info=True)
