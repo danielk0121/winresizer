@@ -41,10 +41,20 @@
 - 목표 50MB 미만은 Python 런타임 번들링 구조상 현실적으로 불가
 - **현실적 목표: DMG ~60MB, 설치 후 ~130MB**
 
+## 작업 결과 (완료)
+
+| 항목 | 이전 | 이후 | 절감 |
+|---|---|---|---|
+| `.app` 번들 | 80MB | **30MB** | -50MB (-63%) |
+| DMG | 150MB | **41MB** | -109MB (-73%) |
+
+- **목표 50MB 미만 달성 (DMG 41MB)**
+- 예측(~60MB)보다 더 좋은 결과
+
 ## 작업 계획 (TODO)
 
-- [ ] `core/hotkey_listener.py`: `QThread` → `threading.Thread` 교체
-- [ ] GUI 대체 방식 결정 및 구현 (웹 UI 또는 설정 파일 직접 편집)
-- [ ] `gui.py`, `ui/hotkey_button.py` PyQt5 코드 제거
-- [ ] `requirements.txt`에서 PyQt5 제거
-- [ ] 빌드 후 용량 실측 검증
+- [x] `core/hotkey_listener.py`: `QThread` → `threading.Thread` 교체
+- [x] GUI 대체 방식 결정 및 구현 (Flask 웹 UI + rumps 트레이)
+- [x] `gui.py`, `ui/hotkey_button.py` PyQt5 코드 제거
+- [x] `requirements.txt`에서 PyQt5 제거
+- [x] 빌드 후 용량 실측 검증
