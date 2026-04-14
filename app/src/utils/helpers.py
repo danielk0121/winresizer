@@ -25,5 +25,13 @@ def get_resource_path(relative_path):
     except AttributeError:
         # 로컬 환경인 경우, 프로젝트 루트 폴더 기준 경로를 계산 (app/src/utils/helpers.py 기준)
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        
-    return os.path.join(base_path, relative_path)
+    
+    resolved_path = os.path.join(base_path, relative_path)
+    # logger를 임포트하여 로그를 남깁니다. (순환 참조 방지를 위해 함수 내에서 임포트)
+    try:
+        from utils.logger import logger
+        logger.debug(f"리소스 경로 해결: {relative_path} -> {resolved_path}")
+    except Exception:
+        pass
+
+    return resolved_path

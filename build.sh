@@ -34,3 +34,18 @@ fi
 rm -rf dist/dmg
 
 echo "Build Complete!"
+
+echo "Fixing rpath for macOS bundle..."
+# 스텁 수정
+install_name_tool -add_rpath "@loader_path/." dist/WinResizer.app/Contents/Frameworks/Python || true
+install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/libintl.8.dylib" dist/WinResizer.app/Contents/Frameworks/Python || true
+
+# 실제 라이브러리 수정 (Python 3.14 기준 경로)
+REAL_PYTHON="dist/WinResizer.app/Contents/Frameworks/Python.framework/Versions/3.14/Python"
+if [ -f "$REAL_PYTHON" ]; then
+    install_name_tool -add_rpath "@loader_path/." "$REAL_PYTHON" || true
+    install_name_tool -add_rpath "@loader_path/../../.." "$REAL_PYTHON" || true
+    install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/../../../libintl.8.dylib" "$REAL_PYTHON" || true
+fi
+
+echo "Finalizing App..."

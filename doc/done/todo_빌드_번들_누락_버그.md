@@ -3,8 +3,8 @@
 
 ## 내용
 ```markdown
-❯   추가로 WinResizer.spec의 datas에 app/src/config/가 미포함 상태임을 발견했습니다 — 번들 빌드 시 default-config.json이 포함되지 않으므로 추후 대응이
-    필요합니다.
+추가로 WinResizer.spec의 datas에 app/src/config/가 미포함 상태임을 발견했습니다 — 
+번들 빌드 시 default-config.json이 포함되지 않으므로 추후 대응이 필요합니다.
 
     이게 무슨 말이야. 왜지 ? 빌드할때 config 파일이 포함이 안되는 이유는 뭐야 ? app/src 폴더에 있다는건 소스코드라는 말인데
 
@@ -27,6 +27,7 @@
   지금 config_manager.py에서 _MEIPASS(PyInstaller 번들 경로) 대응도 안 되어 있습니다.
 
   두 가지를 동시에 고칩니다.
+```
 
 ## 조치 사항 (2026-04-15)
 1. **`WinResizer.spec` 수정**:
@@ -41,4 +42,4 @@
 - `dist/WinResizer.app/Contents/Resources/app/src/config/default-config.json` 파일 존재 확인 완료.
 - `pytest`를 통한 설정 로드 및 웹 서버 초기화 테스트 통과.
 - 상세 검증 결과는 `doc/done/verifi_build_res_fix.md`에 기록됨.
-```
+

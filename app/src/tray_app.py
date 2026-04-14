@@ -13,7 +13,7 @@ class TrayApp(rumps.App):
     """
     def __init__(self):
         icon_path = get_resource_path("app/src/ui/tray_icon.png")
-        super().__init__("WinResizer", icon=icon_path, quit_button=None)
+        super().__init__("WinResizer", icon=icon_path, template=True, quit_button=None)
 
         self.menu = [
             rumps.MenuItem("설정 (Preferences...)", callback=self.open_settings),

@@ -4,7 +4,9 @@
 a = Analysis(
     ['app/src/main.py'],
     pathex=['app/src'],
-    binaries=[],
+    binaries=[
+        ('/opt/homebrew/lib/libintl.8.dylib', '.'),
+    ],
     datas=[
         ('app/src/ui/tray_icon.png', 'app/src/ui'),
         ('app/src/templates', 'app/src/templates'),
