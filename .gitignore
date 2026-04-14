@@ -29,3 +29,8 @@ app/venv/
 
 # Project specific
 log/
+
+# Testing
+.pytest_cache/
+app/.pytest_cache/
+
