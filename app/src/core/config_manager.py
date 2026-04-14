@@ -3,14 +3,21 @@ import os
 import sys as _sys
 from utils.logger import logger
 
-# 사용자 설정 파일 경로 (~/Library/Application Support/WinResizer/config.json)
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
-
-# 기본값 파일 경로 (최초 설치/초기화 시에만 사용)
+# 기본 베이스 경로 및 파일 경로 설정
 if getattr(_sys, 'frozen', False):
     _BASE = _sys._MEIPASS
+    CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
 else:
+    # 개발 환경 (app/src)
     _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _LOCAL_CONFIG = os.path.join(_BASE, "config", "config.json")
+    
+    # 개발 환경에서는 로컬 config.json이 있으면 그것을 우선 사용
+    if os.path.exists(_LOCAL_CONFIG):
+        CONFIG_FILE = _LOCAL_CONFIG
+    else:
+        CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
+
 DEFAULT_CONFIG_FILE = os.path.join(_BASE, "config", "default-config.json")
 
 _config_cache = None
@@ -85,16 +92,31 @@ def save_config(config):
         logger.error(f"설정 저장 중 오류 발생: {e}")
 
 
-def save_server_port(port):
-    """런타임 포트 정보를 기록합니다."""
+def save_runtime_info(port):
+    """런타임 정보(포트, PID, 시작 시간)를 기록합니다."""
+    import os as _os
+    from datetime import datetime, timedelta, timezone
+    
     ensure_config_dir()
     try:
         data = {}
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        data.setdefault('runtime', {})['port'] = port
+        
+        # KST (UTC+9) 시간 계산 (ISO 8601 형식)
+        kst = timezone(timedelta(hours=9))
+        now_kst = datetime.now(kst).isoformat(timespec='seconds')
+        
+        data.setdefault('runtime', {})
+        data['runtime'].update({
+            'port': port,
+            'pid': _os.getpid(),
+            'start_time': now_kst
+        })
+        
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+        logger.debug(f"런타임 정보 기록 완료: PID={_os.getpid()}, Port={port}")
     except Exception as e:
-        logger.error(f"서버 포트 기록 중 오류 발생: {e}")
+        logger.error(f"런타임 정보 기록 중 오류 발생: {e}")

@@ -95,7 +95,7 @@ def run_server(port=None, listener=None):
 
     # 실행 포트를 설정 파일에 기록
     from core import config_manager
-    config_manager.save_server_port(port)
+    config_manager.save_runtime_info(port)
 
     return app, port
 
