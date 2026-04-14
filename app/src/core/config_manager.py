@@ -106,3 +106,19 @@ def save_config(config):
         logger.debug(f"설정 파일 저장 성공: {CONFIG_FILE}")
     except Exception as e:
         logger.error(f"설정 저장 중 오류 발생: {e}")
+
+def save_server_port(port):
+    """Flask 서버 실행 포트를 설정 파일의 runtime 섹션에 기록합니다."""
+    ensure_config_dir()
+    try:
+        # 기존 파일 내용 보존 후 runtime.port만 갱신
+        data = {}
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        data.setdefault('runtime', {})['port'] = port
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        logger.debug(f"서버 포트 기록: {port}")
+    except Exception as e:
+        logger.error(f"서버 포트 기록 중 오류 발생: {e}")

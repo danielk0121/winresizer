@@ -3,18 +3,32 @@
 윈도우 창 크기 조절기 프로젝트입니다.
 
 ## 프로젝트 구조
-- **app**: 앱 소스코드 및 테스트 코드
-    - `src/main.py`: 앱 진입점 (TrayApp 실행)
-    - `src/tray_app.py`: macOS 메뉴바 트레이 앱 (rumps 기반)
-    - `src/web_server.py`: Flask 설정 웹 서버
-    - `src/core/hotkey_listener.py`: 글로벌 단축키 감지 백그라운드 스레드
-    - `src/core/window_controller.py`: 창 위치/크기 조절 로직
-    - `src/core/config_manager.py`: 설정 파일 읽기/쓰기
-    - `tests/`: E2E 및 단위 테스트 코드
-    - `requirements.txt`: 의존성 목록
-- **doc**: 설계 문서 및 작업 목록 (TODO)
-- **ref**: 참고 이미지 및 외부 앱 분석 자료
-- **spec**: 요구사항 명세서 및 테스트 계획
+
+```
+winresizer/
+├── app/
+│   ├── src/
+│   │   ├── main.py                  # 앱 진입점 (TrayApp 실행)
+│   │   ├── tray_app.py              # macOS 메뉴바 트레이 앱 (rumps)
+│   │   ├── web_server.py            # Flask 설정 웹 서버
+│   │   ├── core/
+│   │   │   ├── config_manager.py    # 설정 파일 읽기/쓰기
+│   │   │   ├── hotkey_listener.py   # 글로벌 단축키 감지 (pynput)
+│   │   │   ├── window_controller.py # 창 위치/크기 조절 진입점
+│   │   │   ├── window_manager.py    # macOS AX API 래퍼
+│   │   │   ├── coordinate_calculator.py  # 좌표 계산 로직
+│   │   │   ├── monitor_info.py      # 멀티 모니터 정보
+│   │   │   └── smart_cycler.py      # 반복 입력 사이클 (1/2→1/3→2/3)
+│   │   ├── utils/
+│   │   │   ├── logger.py            # 로거 설정
+│   │   │   └── helpers.py           # 경로 헬퍼
+│   │   └── ui/                      # 아이콘 리소스
+│   ├── tests/                       # E2E 및 단위 테스트
+│   └── requirements.txt
+├── doc/                             # 설계 문서 및 작업 목록 (TODO)
+├── spec/                            # 요구사항 명세서
+└── ref/                             # 참고 이미지 및 외부 앱 분석 자료
+```
 
 ## 실행 중 프로세스 구성
 

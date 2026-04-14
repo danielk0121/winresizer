@@ -265,6 +265,11 @@ def run_server(port=None, listener=None):
     )
     server_thread.start()
     logger.info(f"웹 서버 시작: http://127.0.0.1:{port}")
+
+    # 실행 포트를 설정 파일에 기록
+    from core import config_manager
+    config_manager.save_server_port(port)
+
     return app, port
 
 
