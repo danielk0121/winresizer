@@ -345,7 +345,6 @@ async function saveConfig() {
         if (raw === '' || isNaN(pct) || pct < 1 || pct > 100 || String(pct) !== raw.trim()) {
             status.style.color = '#e74c3c';
             status.textContent = t('pctError');
-            setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
             return;
         }
     }
@@ -363,7 +362,6 @@ async function saveConfig() {
         const conflictDesc = conflicts.map(names => names.map(hotkeyLabel).join(' ↔ ')).join(', ');
         status.style.color = '#e74c3c';
         status.textContent = t('duplicateError', conflictDesc);
-        setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 5000);
         return;
     }
 
@@ -394,7 +392,6 @@ async function saveConfig() {
         status.style.color = '#e74c3c';
         status.textContent = t('saveFail');
     }
-    setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
 }
 
 async function resetConfig() {
@@ -411,7 +408,6 @@ async function resetConfig() {
         status.style.color = '#e74c3c';
         status.textContent = t('resetFail');
     }
-    setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
 }
 
 loadConfig();
