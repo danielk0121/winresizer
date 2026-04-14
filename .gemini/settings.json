@@ -1,5 +1,59 @@
 {
   "context": {
     "fileName": "AGENTS.md"
+  },
+  "model": {
+    "name": "gemini-3-flash-preview"
+  },
+  "modelConfigs": {
+    "customAliases": {
+      "chat-base": {
+        "modelConfig": {
+          "generateContentConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": 10000
+            }
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    "overrides": {
+      "codebase_investigator": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash-lite-preview",
+          "generateContentConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": 4000
+            }
+          }
+        }
+      },
+      "generalist": {
+        "modelConfig": {
+          "model": "gemini-3-flash-preview",
+          "generateContentConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": 10000
+            }
+          }
+        }
+      },
+      "web_searcher": {
+        "runConfig": {
+          "maxTimeMinutes": 2,
+          "maxTurns": 30
+        },
+        "modelConfig": {
+          "model": "gemini-3-pro",
+          "generateContentConfig": {
+            "thinkingConfig": {
+              "thinkingLevel": "HIGH"
+            }
+          }
+        }
+      }
+    }
   }
 }

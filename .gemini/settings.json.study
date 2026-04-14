@@ -1,0 +1,100 @@
+{
+  "context": {
+    "fileName": "AGENTS.md"
+  },
+  "model": {
+    "name": "gemini-3-flash-preview"  // 기본값은 무엇인가 ?
+  },
+  "modelConfigs": {
+    "customAliases": {
+      "chat-base": {
+        "modelConfig": {
+          "generateContentConfig": {
+            "thinkingConfig": {
+              "thinkingBudget": 10000  // 기본값은 무엇인가 ?
+            }
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    "overrides": {  // agents.overrides.xxx 다른 항목이 더 있나 ?
+      "codebase_investigator": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash-lite-preview"  // 기본값은 무엇인가 ?
+        }
+      },
+      "generalist": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash-lite-preview"  // 기본값은 무엇인가 ?
+        }
+      }
+    }
+  }
+}
+
+===========
+1. 모델별 thinkingBudget (추론 예산) 기본값
+최신 Gemini 모델(2.5 및 3.x 계열)들은 모델의 체급(Pro, Flash, Flash-Lite)에 따라 기본 추론 동작 방식이 다릅니다.
+
+Gemini 3 Pro / 2.5 Pro (무거운 모델)
+기본값: -1 (동적 추론 자동 활성화)
+설명: Pro 모델은 복잡한 추론을 위해 설계되었으므로 기본적으로 항상 생각(Thinking)을 하도록 설정되어 있습니다.
+사용자가 임의로 추론 기능을 0으로 만들어 끌 수 없으며,
+모델이 문제 난이도에 따라 필요한 만큼 토큰(최대 약 32,768자)을 스스로 유연하게 사용합니다.
+(참고: Gemini 3부터는 숫자 예산 대신 thinkingLevel: "high", "medium" 등의 파라미터 제어가 권장되기도 합니다.)
+
+Gemini 3 Flash / 2.5 Flash (범용 모델)
+기본값: -1 (동적 추론 자동 활성화)
+설명: 빠르고 다재다능한 Flash 모델 역시 기본적으로 동적 추론이 켜져 있습니다.
+다만 Pro 모델과 달리, 사용자가 원한다면 thinkingBudget을 0으로 설정하여
+추론 과정을 아예 생략하고 즉시 답변하도록 강제할 수 있습니다.
+
+Gemini 3.1 Flash-Lite / 2.5 Flash-Lite (경량/초고속 모델)
+기본값: 0 (추론 기능 꺼짐) 또는 minimal (최소한의 추론)
+설명: 속도와 비용 절감이 최우선인 Lite 모델은 기본적으로 추론 과정 없이 바로 답변을 생성하도록 설정되어 있습니다.
+
+===========
+즉, thinkingConfig: { "thinkingLevel": "HIGH" }로 설정하면,
+모델은 내부적으로 설정된 '높은 수준의 추론'에 해당하는 넉넉한 토큰 예산을 할당받아 복잡한 문제를 깊게 고민하게 됩니다.
+
+===========
+thinkingBudget (숫자 방식): 주로 Gemini 2.5 모델에서 사용되던 방식입니다.
+정확한 토큰 수치(예: 4000, 0, -1 등)를 지정하여 예산을 통제합니다.
+
+thinkingLevel (레벨 방식): Gemini 3 이후 모델부터 도입 및 권장되는 방식입니다.
+구체적인 토큰 수치를 몰라도 모델이 알아서 레벨(LOW, MEDIUM, HIGH 등)에 맞게 최적의 추론을 하도록
+추상화되었습니다.
+
+===========
+1. modelConfigs.customAliases.chat-base (모델 프로필/템플릿)
+설명: chat-base라는 이름의 별칭(Alias)을 하나 만들어두고, 그 안에 thinkingBudget: 10000 같은 세부 설정을 저장해 두는 공간입니다.
+
+2. agents.overrides.generalist (에이전트/작업자 설정)
+설명: generalist는 일반적인 대화를 담당하는 기본 에이전트입니다.
+이 항목에서는 "generalist라는 작업자는 gemini-3.1-flash-lite-preview 모델을 사용해라"라고
+특정 작업자에게 특정 모델을 할당합니다.
+
+===========
+이 개념을 정확히 이해하려면, 여기서 말하는 "턴(Turn)"이 사용자와 챗봇이 주고받는 대화 횟수가 아니라,
+에이전트가 스스로 도구(Tool)를 사용하고 결과를 확인하는 내부적인 왕복 과정이라는 점을 알아야 합니다.
+
+1. 왜 maxTurns 설정이 필요한가요?
+가장 큰 이유는 **'무한 루프(Infinite Loop)와 요금 폭탄 방지'**입니다.
+
+===========
+2. 그럼 실제 기본값은 어디에 있을까?
+실제 에이전트별 동작 기본값은 JSON 파일이 아니라, Gemini CLI를 구동하는
+실제 TypeScript 소스 코드(로직) 내부에 하드코딩되어 있습니다.
+
+예를 들어, CLI 개발자들은 소스 코드 내부(예: src/agents/web_searcher.ts 또는 에이전트 초기화 로직)에
+대략 이런 식으로 구현해 둡니다.
+
+const maxTimeMinutes = runConfig.maxTimeMinutes ?? 10; // 사용자가 안 적었으면 기본값 10분
+const maxTurns = runConfig.maxTurns ?? 25;           // 사용자가 안 적었으면 기본값 25턴
+
+===========
+
+
+
