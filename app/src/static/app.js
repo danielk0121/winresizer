@@ -17,6 +17,7 @@ const LANG = {
         hotkeyWaiting:'키 입력 대기...',
         gapSection:   '창 간격 (Gap)',
         confirmClear: '전체 단축키를 삭제할까요?',
+        clearDone:    '모든 단축키가 삭제되었습니다. (저장 버튼을 눌러야 반영됩니다)',
         resetBtn:     '기본 세팅값으로 초기화',
         confirmReset: '모든 설정을 기본값으로 초기화할까요?',
         resetDone:    '기본값으로 초기화되었습니다.',
@@ -43,6 +44,7 @@ const LANG = {
         hotkeyWaiting:'Waiting for key...',
         gapSection:   'Window Gap',
         confirmClear: 'Delete all hotkeys?',
+        clearDone:    'All hotkeys deleted. (Must click Save to apply)',
         resetBtn:     'Reset to Defaults',
         confirmReset: 'Reset all settings to default values?',
         resetDone:    'Reset to default settings.',
@@ -326,6 +328,10 @@ function clearAll() {
     renderHotkeys();
     renderCustomHotkeys();
     renderGap();
+    
+    const status = document.getElementById('status');
+    status.style.color = '#f39c12';
+    status.textContent = t('clearDone');
 }
 
 async function saveConfig() {
