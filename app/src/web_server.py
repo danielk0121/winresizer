@@ -8,16 +8,15 @@ from flask import Flask, jsonify, request, render_template
 from core import config_manager
 from utils.logger import logger
 
-# PyInstaller 번들(_MEIPASS) 및 일반 실행 모두 대응하는 기준 경로
-_BASE_DIR = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+from utils.helpers import get_resource_path
 
 
 def create_app():
     """Flask 앱 팩토리"""
     app = Flask(
         __name__,
-        template_folder=os.path.join(_BASE_DIR, 'templates'),
-        static_folder=os.path.join(_BASE_DIR, 'static'),
+        template_folder=get_resource_path('app/src/templates'),
+        static_folder=get_resource_path('app/src/static'),
     )
 
     @app.route('/')

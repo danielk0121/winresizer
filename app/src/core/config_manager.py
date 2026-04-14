@@ -3,22 +3,18 @@ import os
 import sys as _sys
 from utils.logger import logger
 
-# 기본 베이스 경로 및 파일 경로 설정
-if getattr(_sys, 'frozen', False):
-    _BASE = _sys._MEIPASS
-    CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
-else:
-    # 개발 환경 (app/src)
-    _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    _LOCAL_CONFIG = os.path.join(_BASE, "config", "config.json")
-    
-    # 개발 환경에서는 로컬 config.json이 있으면 그것을 우선 사용
-    if os.path.exists(_LOCAL_CONFIG):
-        CONFIG_FILE = _LOCAL_CONFIG
-    else:
-        CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
+from utils.helpers import get_resource_path
 
-DEFAULT_CONFIG_FILE = os.path.join(_BASE, "config", "default-config.json")
+# 사용자 설정 파일 경로 (~/Library/Application Support/WinResizer/config.json)
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
+
+# 개발 환경 대응: 로컬에 config.json이 있으면 우선 사용 (테스트용)
+_LOCAL_DEV_CONFIG = get_resource_path("app/src/config/config.json")
+if not getattr(_sys, 'frozen', False) and os.path.exists(_LOCAL_DEV_CONFIG):
+    CONFIG_FILE = _LOCAL_DEV_CONFIG
+
+# 기본 설정 파일 (번들에 포함된 원본)
+DEFAULT_CONFIG_FILE = get_resource_path("app/src/config/default-config.json")
 
 _config_cache = None
 

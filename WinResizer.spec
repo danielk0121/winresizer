@@ -7,9 +7,9 @@ a = Analysis(
     binaries=[],
     datas=[
         ('app/src/ui/tray_icon.png', 'app/src/ui'),
-        ('app/src/templates', 'templates'),
-        ('app/src/static', 'static'),
-        ('app/src/config', 'config'),
+        ('app/src/templates', 'app/src/templates'),
+        ('app/src/static', 'app/src/static'),
+        ('app/src/config', 'app/src/config'),
     ],
     hiddenimports=[],
     hookspath=[],
