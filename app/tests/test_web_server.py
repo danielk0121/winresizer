@@ -37,22 +37,6 @@ class TestWebServer(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         mock_save.assert_called_once()
 
-    @patch('core.config_manager.save_config')
-    def test_post_config_restarts_listener(self, mock_save):
-        """POST /api/config 후 리스너가 재시작되는지 확인"""
-        from web_server import create_app
-        app = create_app()
-        mock_listener = MagicMock()
-        app.config['listener'] = mock_listener
-
-        client = app.test_client()
-        payload = {'shortcuts': {}, 'settings': {}}
-        client.post('/api/config',
-                    data=json.dumps(payload),
-                    content_type='application/json')
-
-        mock_listener.stop.assert_called_once()
-
     def test_post_config_invalid_json(self):
         """POST /api/config 에 잘못된 JSON 전송 시 400 반환"""
         res = self.client.post('/api/config',

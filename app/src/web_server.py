@@ -50,11 +50,10 @@ def create_app():
 
     @app.route('/api/config/reset', methods=['POST'])
     def reset_config():
-        """설정을 기본값으로 초기화합니다. 리스너는 다음 키 입력 시 자동으로 새 설정을 반영합니다."""
+        """기본 설정값을 반환합니다. (실제 저장은 하지 않음)"""
         default = config_manager._deep_copy_default()
-        config_manager.save_config(default)
-        config_manager._config_cache = None
-        logger.info("설정 기본값 초기화 완료")
+        # 실제 저장은 사용자가 클라이언트에서 '저장' 버튼을 누를 때 수행됨
+        logger.info("기본 설정값 요청됨 (저장 미수행)")
         return jsonify({'status': 'ok', 'config': default})
 
     @app.route('/api/config', methods=['POST'])
@@ -64,7 +63,7 @@ def create_app():
             return jsonify({'error': '잘못된 요청입니다.'}), 400
 
         config_manager.save_config(data)
-        config_manager._config_cache = None  # 캐시 무효화 — 다음 키 입력 시 새 설정 자동 반영
+        config_manager._config_cache = None  # 캐시 무효화 — 다음 키 입력 시 리스너가 새 설정 자동 반영
         logger.info("설정 저장 완료")
         return jsonify({'status': 'ok'})
 

@@ -131,15 +131,37 @@ const HOTKEY_ORDER = [
 ];
 
 let config = {};
+let initialConfig = {};
 let recordingKey = null;
+
+function deepCopy(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
 
 async function loadConfig() {
     const res = await fetch('/api/config');
     config = await res.json();
+    initialConfig = deepCopy(config);
     document.getElementById('gap').value = config.settings?.gap ?? 5;
     applyLang();
     renderHotkeys();
     renderCustomHotkeys();
+}
+
+function isModified(name) {
+    const cur = config.shortcuts?.[name];
+    const ini = initialConfig.shortcuts?.[name];
+    if (!cur || !ini) return false;
+    
+    // pynput 비교
+    if (cur.pynput !== ini.pynput) return true;
+    
+    // 커스텀 비율 모드인 경우 비율 비교
+    if (CUSTOM_KEYS.includes(name)) {
+        if (cur.mode !== ini.mode) return true;
+    }
+    
+    return false;
 }
 
 function renderHotkeys() {
@@ -151,7 +173,8 @@ function renderHotkeys() {
         if (!info) continue;
         const display = info.pynput ? info.display : t('hotkeyDefault');
         const row = document.createElement('div');
-        row.className = 'row';
+        row.className = 'row' + (isModified(name) ? ' modified' : '');
+        row.id = 'row-' + name;
         row.innerHTML = `
             <span class="label">${hotkeyLabel(name)}</span>
             <button class="hotkey-btn" id="btn-${name}" onclick="startRecording('${name}')">${display}</button>
@@ -165,6 +188,12 @@ function renderCustomHotkeys() {
     for (const name of CUSTOM_KEYS) {
         const info = config.shortcuts?.[name];
         if (!info) continue;
+        
+        const row = document.getElementById('row-' + name);
+        if (row) {
+            row.className = 'custom-row' + (isModified(name) ? ' modified' : '');
+        }
+
         const btn = document.getElementById('btn-' + name);
         if (btn && !btn.classList.contains('recording')) {
             btn.textContent = info.pynput ? info.display : t('hotkeyDefault');
@@ -191,6 +220,10 @@ function stopRecording() {
     const btn = document.getElementById('btn-' + recordingKey);
     if (btn) btn.classList.remove('recording');
     recordingKey = null;
+    
+    // 변경 사항이 있을 수 있으므로 렌더링 갱신
+    renderHotkeys();
+    renderCustomHotkeys();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -200,7 +233,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Backspace' || e.key === 'Delete') {
         config.shortcuts[recordingKey].pynput = '';
         config.shortcuts[recordingKey].display = '';
-        document.getElementById('btn-' + recordingKey).textContent = t('hotkeyDefault');
         stopRecording();
         return;
     }
@@ -236,7 +268,6 @@ document.addEventListener('keydown', (e) => {
 
     config.shortcuts[recordingKey].pynput = pynput;
     config.shortcuts[recordingKey].display = display;
-    document.getElementById('btn-' + recordingKey).textContent = display;
     stopRecording();
 });
 
@@ -313,6 +344,9 @@ async function saveConfig() {
         body: JSON.stringify(config)
     });
     if (res.ok) {
+        initialConfig = deepCopy(config); // 저장 성공 시 초기값 갱신
+        renderHotkeys();
+        renderCustomHotkeys();
         status.style.color = '#2ecc71';
         status.textContent = t('saveDone');
     } else {
@@ -328,13 +362,13 @@ async function resetConfig() {
     const status = document.getElementById('status');
     if (res.ok) {
         const data = await res.json();
-        config = data.config;
+        config = data.config; // 로컬 설정만 업데이트 (initialConfig는 그대로 두어 음영 발생 유도)
         document.getElementById('gap').value = config.settings?.gap ?? 5;
         applyLang();
         renderHotkeys();
         renderCustomHotkeys();
-        status.style.color = '#2ecc71';
-        status.textContent = t('resetDone');
+        status.style.color = '#f39c12';
+        status.textContent = t('resetDone') + ' (저장 버튼을 눌러야 반영됩니다)';
     } else {
         status.style.color = '#e74c3c';
         status.textContent = t('resetFail');

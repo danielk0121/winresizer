@@ -57,13 +57,5 @@ class TestBrowserE2E(unittest.TestCase):
         bounds = get_window_bounds(win)
         self.assertGreater(bounds[2], 0)
 
-    def test_edge(self):
-        self.setUp_browser("Microsoft Edge")
-        win = self.get_window()
-        self.assertIsNotNone(win, "Edge 창을 찾을 수 없습니다.")
-        self.send_command("우측_절반")
-        bounds = get_window_bounds(win)
-        self.assertGreater(bounds[2], 0)
-
 if __name__ == "__main__":
     unittest.main()

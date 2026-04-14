@@ -18,10 +18,7 @@ def setup_logger():
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
         
-    kst_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_filename = f"winresizer_{kst_now}_KST.log"
-    
-    log_path = os.path.join(LOG_DIR, log_filename)
+    log_path = os.path.join(LOG_DIR, "winresizer.log")
     
     # 루트 로거 설정 대신 winresizer 전용 로거 설정
     logger = logging.getLogger("winresizer")
@@ -30,8 +27,18 @@ def setup_logger():
     if not logger.handlers:
         formatter = logging.Formatter('%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s')
         
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        # 날짜별 롤링 설정: 매일(D) 자정에 실행, 30일(backupCount) 보관
+        from logging.handlers import TimedRotatingFileHandler
+        file_handler = TimedRotatingFileHandler(
+            log_path, 
+            when="midnight", 
+            interval=1, 
+            backupCount=30, 
+            encoding='utf-8'
+        )
         file_handler.setFormatter(formatter)
+        # 롤링 시 파일명 뒤에 .YYYY-MM-DD 가 붙도록 설정
+        file_handler.suffix = "%Y-%m-%d"
         
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
