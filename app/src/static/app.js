@@ -7,7 +7,7 @@ const LANG = {
         saveDone:     '저장 완료! 단축키가 즉시 반영되었습니다.',
         saveFail:     '저장 실패.',
         customSection:'커스텀 비율 창 조절',
-        customDesc:   '비율(1~99%)을 입력하고 단축키를 설정하세요.',
+        customDesc:   '비율(1~100%)을 입력하고 단축키를 설정하세요.',
         dirLeft:      '좌측',
         dirRight:     '우측',
         dirTop:       '상단',
@@ -21,7 +21,8 @@ const LANG = {
         confirmReset: '모든 설정을 기본값으로 초기화할까요?',
         resetDone:    '기본값으로 초기화되었습니다.',
         resetFail:    '초기화 실패.',
-        pctError:     '비율은 1~99 사이 정수를 입력하세요.',
+        pctError:     '비율은 1~100 사이 정수를 입력하세요.',
+        duplicateError: (names) => `단축키 충돌: ${names} 와(과) 동일한 단축키입니다. 저장할 수 없습니다.`,
         applyDone:    (dir, pct) => `${dir} ${pct}% 적용 완료`,
         applyFail:    '적용 실패',
     },
@@ -32,7 +33,7 @@ const LANG = {
         saveDone:     'Saved! Hotkeys applied immediately.',
         saveFail:     'Save failed.',
         customSection:'Custom Ratio Resize',
-        customDesc:   'Enter a ratio (1~99%) and set a hotkey.',
+        customDesc:   'Enter a ratio (1~100%) and set a hotkey.',
         dirLeft:      'Left',
         dirRight:     'Right',
         dirTop:       'Top',
@@ -46,7 +47,8 @@ const LANG = {
         confirmReset: 'Reset all settings to default values?',
         resetDone:    'Reset to default settings.',
         resetFail:    'Reset failed.',
-        pctError:     'Enter an integer between 1 and 99.',
+        pctError:     'Enter an integer between 1 and 100.',
+        duplicateError: (names) => `Hotkey conflict: same as ${names}. Cannot save.`,
         applyDone:    (dir, pct) => `${dir} ${pct}% applied`,
         applyFail:    'Apply failed',
     },
@@ -256,9 +258,9 @@ function clearAll() {
 }
 
 async function saveConfig() {
-    config.settings = config.settings || {};
-    config.settings.gap = parseInt(document.getElementById('gap').value) || 0;
+    const status = document.getElementById('status');
 
+    // 비율 유효성 검사 (1~100 정수)
     const dirMap = {
         'Left Custom': 'left',
         'Right Custom': 'right',
@@ -267,11 +269,41 @@ async function saveConfig() {
     };
     for (const [name, dir] of Object.entries(dirMap)) {
         const pctId = CUSTOM_PCT_IDS[name];
+        const raw = document.getElementById(pctId).value;
+        const pct = parseInt(raw);
+        if (raw === '' || isNaN(pct) || pct < 1 || pct > 100 || String(pct) !== raw.trim()) {
+            status.style.color = '#e74c3c';
+            status.textContent = t('pctError');
+            setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
+            return;
+        }
+    }
+
+    // 중복 단축키 검사
+    const pynputToNames = {};
+    for (const [name, info] of Object.entries(config.shortcuts || {})) {
+        const pk = info.pynput;
+        if (!pk) continue;
+        if (!pynputToNames[pk]) pynputToNames[pk] = [];
+        pynputToNames[pk].push(name);
+    }
+    const conflicts = Object.values(pynputToNames).filter(names => names.length > 1);
+    if (conflicts.length > 0) {
+        const conflictDesc = conflicts.map(names => names.map(hotkeyLabel).join(' ↔ ')).join(', ');
+        status.style.color = '#e74c3c';
+        status.textContent = t('duplicateError', conflictDesc);
+        setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 5000);
+        return;
+    }
+
+    config.settings = config.settings || {};
+    config.settings.gap = parseInt(document.getElementById('gap').value) || 0;
+
+    for (const [name, dir] of Object.entries(dirMap)) {
+        const pctId = CUSTOM_PCT_IDS[name];
         const pct = parseInt(document.getElementById(pctId).value);
-        if (!isNaN(pct) && pct >= 1 && pct <= 99) {
-            if (config.shortcuts[name]) {
-                config.shortcuts[name].mode = `${dir}_custom:${pct}`;
-            }
+        if (config.shortcuts[name]) {
+            config.shortcuts[name].mode = `${dir}_custom:${pct}`;
         }
     }
 
@@ -280,7 +312,6 @@ async function saveConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
     });
-    const status = document.getElementById('status');
     if (res.ok) {
         status.style.color = '#2ecc71';
         status.textContent = t('saveDone');

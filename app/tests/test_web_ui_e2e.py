@@ -88,7 +88,7 @@ class TestWebUIE2E(unittest.TestCase):
         res = self.client.get('/')
         html = res.data.decode('utf-8')
         self.assertIn('WinResizer', html)
-        self.assertIn('api/config', html)
+        self.assertIn('app.js', html)
 
 
 if __name__ == '__main__':

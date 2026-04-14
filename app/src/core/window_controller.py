@@ -33,7 +33,7 @@ def is_valid_custom_mode(mode):
     if parsed is None:
         return False
     _, pct = parsed
-    return 1 <= pct <= 99
+    return 1 <= pct <= 100
 
 
 def execute_window_command(mode):

@@ -72,14 +72,6 @@ class HotkeyListenerThread(threading.Thread):
                             logger.debug(f"Hotkey detected: {pynput_str}")
                             execute_window_command(cfg['mode'])
                             last_trigger_time = current_time
-                        
-                        # Support continuous input by keeping only modifier keys in the set
-                        modifier_keys = {
-                            'ctrl', 'alt', 'cmd', 'shift', 
-                            'ctrl_l', 'ctrl_r', 'alt_l', 'alt_r', 
-                            'cmd_l', 'cmd_r', 'shift_l', 'shift_r'
-                        }
-                        currently_pressed_keys.intersection_update(modifier_keys)
                         break
             except Exception as e:
                 logger.error(f"Error processing hotkey (on_press): {e}")

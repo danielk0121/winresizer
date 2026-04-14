@@ -47,12 +47,13 @@ class TestIsValidCustomMode(unittest.TestCase):
         self.assertTrue(is_valid_custom_mode("left_custom:1"))
         self.assertTrue(is_valid_custom_mode("left_custom:50"))
         self.assertTrue(is_valid_custom_mode("left_custom:99"))
+        self.assertTrue(is_valid_custom_mode("left_custom:100"))
 
     def test_zero_is_invalid(self):
         self.assertFalse(is_valid_custom_mode("left_custom:0"))
 
-    def test_100_is_invalid(self):
-        self.assertFalse(is_valid_custom_mode("left_custom:100"))
+    def test_over_100_is_invalid(self):
+        self.assertFalse(is_valid_custom_mode("left_custom:101"))
 
     def test_negative_is_invalid(self):
         self.assertFalse(is_valid_custom_mode("left_custom:-1"))
