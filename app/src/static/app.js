@@ -17,6 +17,10 @@ const LANG = {
         hotkeyWaiting:'키 입력 대기...',
         gapSection:   '창 간격 (Gap)',
         confirmClear: '전체 단축키를 초기화할까요?',
+        resetBtn:     '기본 세팅값으로 초기화',
+        confirmReset: '모든 설정을 기본값으로 초기화할까요?',
+        resetDone:    '기본값으로 초기화되었습니다.',
+        resetFail:    '초기화 실패.',
         pctError:     '비율은 1~99 사이 정수를 입력하세요.',
         applyDone:    (dir, pct) => `${dir} ${pct}% 적용 완료`,
         applyFail:    '적용 실패',
@@ -38,6 +42,10 @@ const LANG = {
         hotkeyWaiting:'Waiting for key...',
         gapSection:   'Window Gap',
         confirmClear: 'Reset all hotkeys?',
+        resetBtn:     'Reset to Defaults',
+        confirmReset: 'Reset all settings to default values?',
+        resetDone:    'Reset to default settings.',
+        resetFail:    'Reset failed.',
         pctError:     'Enter an integer between 1 and 99.',
         applyDone:    (dir, pct) => `${dir} ${pct}% applied`,
         applyFail:    'Apply failed',
@@ -253,6 +261,26 @@ async function saveConfig() {
     } else {
         status.style.color = '#e74c3c';
         status.textContent = t('saveFail');
+    }
+    setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
+}
+
+async function resetConfig() {
+    if (!confirm(t('confirmReset'))) return;
+    const res = await fetch('/api/config/reset', { method: 'POST' });
+    const status = document.getElementById('status');
+    if (res.ok) {
+        const data = await res.json();
+        config = data.config;
+        document.getElementById('gap').value = config.settings?.gap ?? 5;
+        applyLang();
+        renderHotkeys();
+        renderCustomHotkeys();
+        status.style.color = '#2ecc71';
+        status.textContent = t('resetDone');
+    } else {
+        status.style.color = '#e74c3c';
+        status.textContent = t('resetFail');
     }
     setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
 }

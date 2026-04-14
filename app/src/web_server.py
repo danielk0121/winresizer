@@ -50,6 +50,29 @@ def create_app():
         execute_window_command(mode)
         return jsonify({'status': 'ok', 'mode': mode})
 
+    @app.route('/api/config/reset', methods=['POST'])
+    def reset_config():
+        """설정을 기본값으로 초기화하고 리스너를 재시작합니다."""
+        default = {
+            'shortcuts': {k: dict(v) for k, v in config_manager.DEFAULT_CONFIG.items()},
+            'settings': dict(config_manager.DEFAULT_SETTINGS),
+        }
+        config_manager.save_config(default)
+        config_manager._config_cache = None
+
+        listener = app.config.get('listener')
+        try:
+            if listener is not None:
+                listener.stop()
+            new_listener = HotkeyListenerThread()
+            new_listener.start()
+            app.config['listener'] = new_listener
+        except Exception as e:
+            logger.error(f"리스너 재시작 중 오류 발생: {e}", exc_info=True)
+
+        logger.info("설정 기본값 초기화 완료")
+        return jsonify({'status': 'ok', 'config': default})
+
     @app.route('/api/config', methods=['POST'])
     def post_config():
         data = request.get_json(silent=True)

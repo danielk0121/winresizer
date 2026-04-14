@@ -38,6 +38,11 @@ h1 { font-size: 20px; color: #eee; }
     border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer;
 }
 .clear-btn:hover { background: #e74c3c; }
+.reset-btn {
+    margin-top: 10px; width: 100%; padding: 10px; background: #555;
+    border: none; border-radius: 8px; color: #ccc; font-size: 14px; cursor: pointer;
+}
+.reset-btn:hover { background: #666; color: #fff; }
 #status { margin-top: 12px; text-align: center; font-size: 13px; color: #2ecc71; height: 20px; }
 .custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .custom-label { width: 80px; font-size: 14px; color: #ccc; flex-shrink: 0; }
