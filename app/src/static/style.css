@@ -27,21 +27,16 @@ h1 { font-size: 18px; color: #eee; }
     width: 70px; padding: 5px 10px; background: #3a3a3a; border: 1px solid #555;
     border-radius: 6px; color: #fff; font-size: 13px;
 }
-.save-btn {
-    width: 100%; padding: 9px; background: #2980b9;
-    border: none; border-radius: 8px; color: #fff; font-size: 14px;
-    font-weight: bold; cursor: pointer; margin-bottom: 6px;
+.save-btn, .clear-btn, .reset-btn {
+    width: 100%; padding: 9px; border: none; border-radius: 8px;
+    color: #fff; font-size: 14px; font-weight: bold; cursor: pointer;
+    margin-bottom: 6px;
 }
-.save-btn:hover { background: #3498db; }
-.clear-btn {
-    width: 100%; padding: 7px; background: #c0392b;
-    border: none; border-radius: 8px; color: #fff; font-size: 13px; cursor: pointer;
-}
+.save-btn  { background: #2980b9; }
+.save-btn:hover  { background: #3498db; }
+.clear-btn { background: #c0392b; }
 .clear-btn:hover { background: #e74c3c; }
-.reset-btn {
-    margin-top: 6px; width: 100%; padding: 7px; background: #555;
-    border: none; border-radius: 8px; color: #ccc; font-size: 13px; cursor: pointer;
-}
+.reset-btn { background: #555; color: #ccc; }
 .reset-btn:hover { background: #666; color: #fff; }
 #status { margin-top: 6px; text-align: center; font-size: 12px; color: #2ecc71; height: 16px; }
 .custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
