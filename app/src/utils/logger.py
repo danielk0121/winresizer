@@ -13,7 +13,8 @@ def setup_logger():
     if _initialized:
         return logging.getLogger("winresizer")
 
-    LOG_DIR = "log"
+    # .app 번들 실행 시에도 안전하게 사용자 홈 기준 경로 사용
+    LOG_DIR = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "log")
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
         

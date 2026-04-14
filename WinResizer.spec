@@ -48,4 +48,10 @@ app = BUNDLE(
     name='WinResizer.app',
     icon='app/src/ui/icon.icns',
     bundle_identifier='com.winresizer.app',
+    info_plist={
+        'CFBundleShortVersionString': '1.0.0',
+        'LSUIElement': True,
+        'NSAccessibilityUsageDescription': 'WinResizer는 단축키로 창 위치와 크기를 조절하기 위해 손쉬운 사용 권한이 필요합니다.',
+        'NSAppleEventsUsageDescription': 'WinResizer는 활성 창 제어를 위해 이 권한이 필요합니다.',
+    },
 )

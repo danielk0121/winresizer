@@ -5,15 +5,8 @@ set -e
 cd "$(dirname "$0")"
 
 echo "Building App Bundle..."
-# PyInstaller command
-./app/venv/bin/pyinstaller --noconfirm --log-level=WARN \
-    --windowed \
-    --name="WinResizer" \
-    --icon="app/src/ui/icon.icns" \
-    --add-data="app/src/ui/tray_icon.png:app/src/ui" \
-    --osx-bundle-identifier "com.winresizer.app" \
-    --paths="app/src" \
-    app/src/main.py
+# .spec 파일로 빌드 (info_plist 등 세부 설정 포함)
+./app/venv/bin/pyinstaller --noconfirm --log-level=WARN WinResizer.spec
 
 echo "Creating DMG..."
 mkdir -p dist/dmg

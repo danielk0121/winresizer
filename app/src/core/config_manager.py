@@ -2,10 +2,8 @@ import json
 import os
 from utils.logger import logger
 
-# 현재 파일(config_manager.py)의 위치를 기준으로 app/src/config/config.json 절대 경로 설정
-# app/src/core/config_manager.py -> app/src/config/config.json
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
+# .app 번들 실행 시에도 안전하게 사용자 홈 기준 경로 사용
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
 
 def ensure_config_dir():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
