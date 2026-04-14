@@ -44,13 +44,12 @@
 
 ## 작업 계획 (TODO)
 
-- [ ] todo 문서 작성
-- [ ] `index.html`: 번역 대상 요소에 `data-i18n` 속성 추가, 우상단 언어 전환 버튼 추가
-- [ ] `static/style.css`: 언어 전환 버튼 스타일 추가
-- [ ] `static/app.js`: `LANG` 번역 맵, `applyLang()`, `toggleLang()` 구현, localStorage 연동
-- [ ] 브라우저에서 한/영 전환 동작 육안 확인
-- [ ] 기존 테스트 전체 통과 확인
-- [ ] 커밋 푸시
+- [x] todo 문서 작성
+- [x] `index.html`: 번역 대상 요소에 `data-i18n` 속성 추가, 우상단 KOR/ENG 버튼 추가
+- [x] `static/style.css`: 언어 전환 버튼 스타일 추가
+- [x] `static/app.js`: `LANG` 번역 맵, `applyLang()`, `setLang()` 구현, localStorage 연동
+- [x] 기존 테스트 전체 통과 확인 (43개)
+- [x] 커밋 푸시
 
 ## 검증 기준
 
