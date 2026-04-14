@@ -8,7 +8,7 @@ a = Analysis(
         ('/opt/homebrew/lib/libintl.8.dylib', '.'),
     ],
     datas=[
-        ('app/src/ui/tray_icon.png', 'app/src/ui'),
+        ('app/src/ui/tray_icon.png', '.'),
         ('app/src/templates', 'app/src/templates'),
         ('app/src/static', 'app/src/static'),
         ('app/src/config', 'app/src/config'),

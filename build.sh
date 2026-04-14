@@ -8,6 +8,31 @@ echo "Building App Bundle..."
 # .spec 파일로 빌드 (info_plist 등 세부 설정 포함)
 ./app/venv/bin/pyinstaller --noconfirm --log-level=WARN WinResizer.spec
 
+echo "Fixing rpath for macOS bundle..."
+APP_PATH="dist/WinResizer.app"
+MACOS_PATH="$APP_PATH/Contents/MacOS"
+FRAMEWORKS_PATH="$APP_PATH/Contents/Frameworks"
+RESOURCES_PATH="$APP_PATH/Contents/Resources"
+
+# libintl.8.dylib 복사 (필요한 모든 곳에 배치)
+cp /opt/homebrew/lib/libintl.8.dylib "$MACOS_PATH/"
+cp /opt/homebrew/lib/libintl.8.dylib "$FRAMEWORKS_PATH/" 2>/dev/null || true
+cp /opt/homebrew/lib/libintl.8.dylib "$RESOURCES_PATH/" 2>/dev/null || true
+
+# 메인 실행 파일 rpath 수정
+echo "Updating main executable rpath..."
+install_name_tool -add_rpath "@loader_path/." "$MACOS_PATH/WinResizer" 2>/dev/null || true
+install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/libintl.8.dylib" "$MACOS_PATH/WinResizer" 2>/dev/null || true
+
+# Python 바이너리 rpath 수정 (경로를 동적으로 찾음)
+echo "Updating Python binaries rpath..."
+find "$APP_PATH" -name "Python" -type f | while read -r python_bin; do
+    install_name_tool -add_rpath "@loader_path/." "$python_bin" 2>/dev/null || true
+    # 상위 폴더(MacOS)에 있는 libintl을 찾을 수 있도록 추가 rpath 설정
+    install_name_tool -add_rpath "@loader_path/../../MacOS" "$python_bin" 2>/dev/null || true
+    install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/libintl.8.dylib" "$python_bin" 2>/dev/null || true
+done
+
 echo "Creating DMG..."
 mkdir -p dist/dmg
 cp -r dist/WinResizer.app dist/dmg/
@@ -34,19 +59,4 @@ fi
 rm -rf dist/dmg
 
 echo "Build Complete!"
-
-echo "Fixing rpath for macOS bundle..."
-# 스텁 수정 (에러 메시지 억제)
-install_name_tool -add_rpath "@loader_path/." dist/WinResizer.app/Contents/Frameworks/Python 2>/dev/null || true
-install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/libintl.8.dylib" dist/WinResizer.app/Contents/Frameworks/Python 2>/dev/null || true
-
-# 실제 라이브러리 수정 (Python 3.14 기준 경로)
-REAL_PYTHON="dist/WinResizer.app/Contents/Frameworks/Python.framework/Versions/3.14/Python"
-if [ -f "$REAL_PYTHON" ]; then
-    # 이미 존재하는 경우 에러가 발생하므로 2>/dev/null로 출력을 숨김
-    install_name_tool -add_rpath "@loader_path/." "$REAL_PYTHON" 2>/dev/null || true
-    install_name_tool -add_rpath "@loader_path/../../.." "$REAL_PYTHON" 2>/dev/null || true
-    install_name_tool -change "@rpath/libintl.8.dylib" "@loader_path/../../../libintl.8.dylib" "$REAL_PYTHON" 2>/dev/null || true
-fi
-
 echo "Finalizing App..."

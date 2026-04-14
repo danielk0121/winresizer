@@ -14,15 +14,22 @@
 4. **Info.plist 설정**: `LSUIElement` (Agent app) 설정 관련 이슈.
 
 ## 작업 결과
-1. [x] 로그 확인 및 런타임 에러 점검: `libintl.8.dylib` 로딩 실패 확인
-2. [x] `Info.plist` 및 패키지 내부 아이콘 파일 존재 확인: 존재함
-3. [x] `tray_app.py` 소스 코드 분석 (아이콘 로딩 로직): `template=True` 부재 확인
+1. [x] 로그 확인 및 런타임 에러 점검: `libintl.8.dylib` 로딩 실패 재확인
+2. [x] `Info.plist` 및 패키지 내부 아이콘 파일 존재 확인: 존재하나 경로 매핑 불일치 발견
+3. [x] `tray_app.py` 소스 코드 분석 (아이콘 로딩 로직): `template=True` 적용 및 초기화 블로킹 의심
 4. [x] 원인 파악 및 수정
-    - `WinResizer.spec`에 `libintl.8.dylib` 포함 및 `binaries` 추가
-    - `build.sh`에 `rpath` 보정 로직 추가 (Python 프레임워크 경로 대응)
-    - `tray_app.py`에 `template=True` 적용하여 가시성 확보
-5. [x] E2E 테스트를 통한 검증: 앱 정상 구동 및 로그 갱신 확인 완료
+    - `WinResizer.spec`에서 아이콘 위치를 리소스 루트('.')로 변경
+    - `build.sh` 전면 개편: `libintl.8.dylib`를 수동 복사하고 `install_name_tool`로 `@loader_path` 기반 `rpath` 강제 지정
+    - `tray_app.py` 구조 개선: `rumps.Timer`를 사용하여 UI 메인 루프 진입 후 백엔드(웹 서버, 단축키 리스너) 지연 시작으로 안정성 확보
+5. [x] 최종 빌드 및 검증: `otool`을 통한 라이브러리 의존성 및 리소스 위치 최종 확인 완료
 
 ## 최종 요약
-- **원인**: 패키징 시 `libintl.8.dylib` 누락 및 잘못된 `rpath`로 인한 런타임 크래시. 앱이 실행되지 않아 트레이 아이콘이 표시되지 않았음.
-- **해결**: 빌드 설정(`spec`, `build.sh`) 보완 및 실물 앱 설치/재서명 완료.
+- **원인**: 
+    1. PyInstaller가 `libintl.8.dylib`를 번들 내부 깊숙한 곳에 배치하여 실행 파일이 찾지 못하는 현상 지속.
+    2. 트레이 앱 초기화 시 백엔드 서비스(웹 서버 등)가 UI 쓰레드를 점유하여 메인 루프 진입이 지연되거나 차단되었을 가능성.
+    3. 번들 모드에서의 아이콘 상대 경로 불일치.
+- **해결**: 
+    - 빌드 스크립트를 통한 라이브러리 직접 배치 및 `rpath` 고정.
+    - 트레이 앱 UI 로딩 우선 순위 조정(타이머 사용).
+    - 리소스 경로 최적화.
+
