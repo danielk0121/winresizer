@@ -146,12 +146,23 @@ async function loadConfig() {
 }
 
 function loadConfigUI() {
+    // 1. 모든 DOM 값(input)들을 먼저 설정
     document.getElementById('gap').value = config.settings?.gap ?? 5;
-    // 커스텀 행 초기화 플래그 제거
+    
     for (const name of CUSTOM_KEYS) {
+        const info = config.shortcuts?.[name];
+        if (!info) continue;
+        const pctId = CUSTOM_PCT_IDS[name];
+        const mode = info.mode || '';
+        const match = mode.match(/_custom:(\d+)$/);
+        if (match && pctId) {
+            document.getElementById(pctId).value = match[1];
+        }
         const row = document.getElementById('row-' + name);
-        if (row) delete row.dataset.initialized;
+        if (row) row.dataset.initialized = "true";
     }
+
+    // 2. 그 다음 UI 렌더링 및 음영 판단 수행
     applyLang();
     renderHotkeys();
     renderCustomHotkeys();
@@ -169,11 +180,16 @@ function isModified(name) {
     // 커스텀 비율 모드인 경우 비율 비교
     if (CUSTOM_KEYS.includes(name)) {
         const pctId = CUSTOM_PCT_IDS[name];
-        const curPct = document.getElementById(pctId).value;
+        const inputEl = document.getElementById(pctId);
+        if (!inputEl) return false;
+
+        const curPct = inputEl.value;
         const mode = ini.mode || '';
         const match = mode.match(/_custom:(\d+)$/);
         const iniPct = match ? match[1] : '';
-        if (curPct !== iniPct) return true;
+        
+        // 문자열로 비교하여 타입 차이로 인한 이슈 방지
+        if (String(curPct) !== String(iniPct)) return true;
     }
     
     return false;
@@ -218,16 +234,6 @@ function renderCustomHotkeys() {
         const btn = document.getElementById('btn-' + name);
         if (btn && !btn.classList.contains('recording')) {
             btn.textContent = info.pynput ? info.display : t('hotkeyDefault');
-        }
-        // 비율 값 초기 로딩 시에만 설정 (사용자 입력 중 방해 금지)
-        if (!document.activeElement || document.activeElement.id !== CUSTOM_PCT_IDS[name]) {
-            const pctId = CUSTOM_PCT_IDS[name];
-            const mode = info.mode || '';
-            const match = mode.match(/_custom:(\d+)$/);
-            if (match && pctId && !row.dataset.initialized) {
-                document.getElementById(pctId).value = match[1];
-                row.dataset.initialized = "true";
-            }
         }
     }
 }
