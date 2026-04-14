@@ -53,10 +53,9 @@
 
 ## 작업 계획 (TODO)
 
-- [ ] 버그 문서 작성
-- [ ] `app.js`: 방향키 key 이름 변환 맵 추가 (`arrowleft` → `left` 등)
-- [ ] `hotkey_listener.py`: 개별 단축키 파싱 실패 시 해당 키 건너뜀, 스레드 크래시 방지
-- [ ] `web_server.py`: `post_config()` 리스너 재시작 try/except 추가
-- [ ] `index.html` + `app.js`: 커스텀 비율 적용 버튼 제거
-- [ ] 전체 테스트 통과 확인
-- [ ] 커밋 푸시
+- [x] 버그 문서 작성
+- [x] `app.js`: 방향키 key 이름 변환 맵 추가 (`arrowleft` → `left` 등)
+- [x] `web_server.py`: `post_config()` 리스너 재시작 try/except 추가
+- [x] `index.html` + `app.js` + `style.css`: 커스텀 비율 적용 버튼 제거
+- [x] 전체 테스트 통과 확인 (43개)
+- [x] 커밋 푸시

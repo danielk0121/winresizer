@@ -12,7 +12,6 @@ const LANG = {
         dirRight:     '우측',
         dirTop:       '상단',
         dirBottom:    '하단',
-        applyBtn:     '적용',
         hotkeySection:'단축키',
         hotkeyDefault:'단축키 입력',
         hotkeyWaiting:'키 입력 대기...',
@@ -34,7 +33,6 @@ const LANG = {
         dirRight:     'Right',
         dirTop:       'Top',
         dirBottom:    'Bottom',
-        applyBtn:     'Apply',
         hotkeySection:'Hotkeys',
         hotkeyDefault:'Press hotkey',
         hotkeyWaiting:'Waiting for key...',
@@ -173,13 +171,28 @@ document.addEventListener('keydown', (e) => {
 
     if (['Control', 'Alt', 'Meta', 'Shift'].includes(e.key)) return;
 
+    // 브라우저 e.key → pynput 키 이름 변환 맵
+    const KEY_MAP = {
+        'arrowleft':  'left',
+        'arrowright': 'right',
+        'arrowup':    'up',
+        'arrowdown':  'down',
+        'enter':      'enter',
+        'escape':     'esc',
+        'tab':        'tab',
+        'space':      'space',
+        ' ':          'space',
+    };
+
     const parts = [];
     if (e.ctrlKey)  parts.push('<ctrl>');
     if (e.altKey)   parts.push('<alt>');
     if (e.metaKey)  parts.push('<cmd>');
     if (e.shiftKey) parts.push('<shift>');
 
-    const key = e.key.length === 1 ? e.key.toLowerCase() : `<${e.key.toLowerCase()}>`;
+    const rawKey = e.key.toLowerCase();
+    const mappedKey = KEY_MAP[rawKey] || rawKey;
+    const key = mappedKey.length === 1 ? mappedKey : `<${mappedKey}>`;
     parts.push(key);
 
     const pynput = parts.join('+');
@@ -242,31 +255,6 @@ async function saveConfig() {
         status.textContent = t('saveFail');
     }
     setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
-}
-
-async function applyCustomDirect(direction, pctInputId) {
-    const pct = parseInt(document.getElementById(pctInputId).value);
-    const status = document.getElementById('status');
-    if (isNaN(pct) || pct < 1 || pct > 99) {
-        status.style.color = '#e74c3c';
-        status.textContent = t('pctError');
-        setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
-        return;
-    }
-    const mode = `${direction}_custom:${pct}`;
-    const res = await fetch('/api/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode })
-    });
-    if (res.ok) {
-        status.style.color = '#2ecc71';
-        status.textContent = t('applyDone', direction, pct);
-    } else {
-        status.style.color = '#e74c3c';
-        status.textContent = t('applyFail');
-    }
-    setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 2000);
 }
 
 loadConfig();

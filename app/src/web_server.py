@@ -61,11 +61,14 @@ def create_app():
 
         # 리스너 재시작
         listener = app.config.get('listener')
-        if listener is not None:
-            listener.stop()
+        try:
+            if listener is not None:
+                listener.stop()
             new_listener = HotkeyListenerThread()
             new_listener.start()
             app.config['listener'] = new_listener
+        except Exception as e:
+            logger.error(f"리스너 재시작 중 오류 발생: {e}", exc_info=True)
 
         logger.info("설정 저장 및 리스너 재시작 완료")
         return jsonify({'status': 'ok'})
