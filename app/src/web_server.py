@@ -23,7 +23,19 @@ def create_app():
     def index():
         return render_template('index.html')
 
-    @app.route('/api/config', methods=['GET'])
+    from core.window_manager import is_accessibility_trusted
+
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    """
+    현재 애플리케이션의 상태(권한 등)를 반환합니다.
+    """
+    return jsonify({
+        "accessibility_granted": is_accessibility_trusted(),
+        "pid": os.getpid()
+    })
+
+@app.route('/api/config', methods=['GET'])
     def get_config():
         return jsonify(config_manager.load_config())
 

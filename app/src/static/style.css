@@ -46,6 +46,39 @@ h1 { font-size: 18px; color: #eee; }
     width: 70px; padding: 5px 10px; background: #3a3a3a; border: 1px solid #555;
     border-radius: 6px; color: #fff; font-size: 13px;
 }
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.status-loading {
+    background-color: #f1f1f1;
+    color: #999;
+}
+
+.status-granted {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.status-denied {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.status-denied:hover {
+    background-color: #ffcdd2;
+}
+
 footer {
     margin-top: 16px; padding-top: 10px; border-top: 1px solid #3a3a3a;
     text-align: center; font-size: 11px; color: #555;

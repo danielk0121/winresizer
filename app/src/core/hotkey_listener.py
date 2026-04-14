@@ -32,10 +32,16 @@ class HotkeyListenerThread(threading.Thread):
 
     def run(self):
         logger.info("Starting hotkey listener thread")
-        if not is_accessibility_trusted():
-            logger.warning("Cannot start listener without Accessibility permissions.")
-            return
         
+        # 권한이 생길 때까지 대기 (2초마다 체크)
+        while not is_accessibility_trusted() and not self._stop_event.is_set():
+            logger.warning("Accessibility permission is missing. Waiting... (Check System Settings)")
+            self._stop_event.wait(timeout=2.0)
+            
+        if self._stop_event.is_set():
+            return
+
+        logger.info("Accessibility permission confirmed. Starting hotkey engine.")
         currently_pressed_keys = set()
         last_trigger_time = 0
 

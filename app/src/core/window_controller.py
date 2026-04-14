@@ -74,7 +74,12 @@ def execute_window_command(mode):
             
         gap = settings.get('gap', 5)
         
-        # 3. 복구 모드 처리
+        # 3. 명령 처리
+        if mode == "open_accessibility":
+            import subprocess
+            subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
+            return
+
         if mode == "복구" or mode == "restore":
             saved_state = get_saved_window_state(target_window)
             if saved_state:
