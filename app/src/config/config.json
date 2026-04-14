@@ -1,15 +1,15 @@
 {
     "runtime": {
-        "pid": 80310,
-        "port": 47865,
-        "start_time": "2026-04-15T05:20:40+09:00"
+        "pid": 81299,
+        "port": 46383,
+        "start_time": "2026-04-15T05:25:40+09:00"
     },
     "settings": {
         "auto_layouts": {
             "Slack": "우측_1/3",
             "iTerm2": "좌측_2/3"
         },
-        "gap": 5,
+        "gap": 2,
         "ignore_apps": [
             "Photoshop",
             "Final Cut Pro",
@@ -25,7 +25,7 @@
         },
         "Bottom Custom": {
             "display": "ctrl + alt + cmd + down",
-            "mode": "bottom_custom:35",
+            "mode": "bottom_custom:70",
             "pynput": "<ctrl>+<alt>+<cmd>+<down>"
         },
         "Bottom Left 1/4": {
@@ -60,7 +60,7 @@
         },
         "Left Custom": {
             "display": "ctrl + alt + cmd + left",
-            "mode": "left_custom:35",
+            "mode": "left_custom:60",
             "pynput": "<ctrl>+<alt>+<cmd>+<left>"
         },
         "Maximize": {
@@ -90,7 +90,7 @@
         },
         "Right Custom": {
             "display": "ctrl + alt + cmd + right",
-            "mode": "right_custom:35",
+            "mode": "right_custom:60",
             "pynput": "<ctrl>+<alt>+<cmd>+<right>"
         },
         "Top": {
@@ -100,7 +100,7 @@
         },
         "Top Custom": {
             "display": "ctrl + alt + cmd + up",
-            "mode": "top_custom:35",
+            "mode": "top_custom:70",
             "pynput": "<ctrl>+<alt>+<cmd>+<up>"
         },
         "Top Left 1/4": {
