@@ -93,6 +93,32 @@ const CUSTOM_PCT_IDS = {
     'Bottom Custom': 'pct-bottom',
 };
 
+// 단축키 항목 한글 이름 맵
+const HOTKEY_LABELS = {
+    ko: {
+        'Left':             '좌측 1/2',
+        'Right':            '우측 1/2',
+        'Top':              '상단 1/2',
+        'Bottom':           '하단 1/2',
+        'Left 1/3':         '좌측 1/3',
+        'Center 1/3':       '중앙 1/3',
+        'Right 1/3':        '우측 1/3',
+        'Left 2/3':         '좌측 2/3',
+        'Right 2/3':        '우측 2/3',
+        'Top Left 1/4':     '좌상단 1/4',
+        'Top Right 1/4':    '우상단 1/4',
+        'Bottom Left 1/4':  '좌하단 1/4',
+        'Bottom Right 1/4': '우하단 1/4',
+        'Maximize':         '최대화',
+        'Restore':          '복구',
+    },
+    en: {},  // 영어는 키 이름 그대로 사용
+};
+
+function hotkeyLabel(name) {
+    return HOTKEY_LABELS[currentLang]?.[name] || name;
+}
+
 // 단축키 섹션 렌더링 순서
 const HOTKEY_ORDER = [
     'Left', 'Right', 'Top', 'Bottom',
@@ -125,7 +151,7 @@ function renderHotkeys() {
         const row = document.createElement('div');
         row.className = 'row';
         row.innerHTML = `
-            <span class="label">${name}</span>
+            <span class="label">${hotkeyLabel(name)}</span>
             <button class="hotkey-btn" id="btn-${name}" onclick="startRecording('${name}')">${display}</button>
             <button class="delete-btn" onclick="deleteHotkey('${name}')">✕</button>
         `;
