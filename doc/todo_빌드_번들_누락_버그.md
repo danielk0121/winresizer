@@ -27,4 +27,18 @@
   지금 config_manager.py에서 _MEIPASS(PyInstaller 번들 경로) 대응도 안 되어 있습니다.
 
   두 가지를 동시에 고칩니다.
+
+## 조치 사항 (2026-04-15)
+1. **`WinResizer.spec` 수정**:
+   - `datas` 항목의 경로를 `app/src/` 구조를 유지하도록 통일했습니다.
+   - `config`, `templates`, `static` 폴더가 번들 내부의 `app/src/` 하위에 정확히 위치하도록 설정했습니다.
+2. **`config_manager.py` 및 `web_server.py` 수정**:
+   - 하드코딩된 경로 계산 로직을 제거하고 `utils.helpers.get_resource_path`를 사용하도록 일원화했습니다.
+   - 이로써 개발 환경과 PyInstaller 번들 환경(`_MEIPASS`) 모두에서 리소스를 안전하게 로드할 수 있습니다.
+
+## 결과 확인
+- `./build.sh`를 통한 번들 빌드 성공.
+- `dist/WinResizer.app/Contents/Resources/app/src/config/default-config.json` 파일 존재 확인 완료.
+- `pytest`를 통한 설정 로드 및 웹 서버 초기화 테스트 통과.
+- 상세 검증 결과는 `doc/done/verifi_build_res_fix.md`에 기록됨.
 ```
