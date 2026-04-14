@@ -17,9 +17,18 @@ class HotkeyListenerThread(threading.Thread):
         super().__init__()
         self.daemon = True
         self._stop_event = threading.Event()
+        self._kb_listener = None  # keyboard.Listener 직접 참조 보관
 
     def stop(self):
         self._stop_event.set()
+        # keyboard.Listener(CGEventTap)를 직접 중단하여 즉시 해제
+        if self._kb_listener is not None:
+            try:
+                self._kb_listener.stop()
+            except Exception:
+                pass
+        # 스레드가 완전히 종료될 때까지 최대 2초 대기
+        self.join(timeout=2.0)
 
     def run(self):
         logger.info("Starting hotkey listener thread")
@@ -80,10 +89,13 @@ class HotkeyListenerThread(threading.Thread):
 
         logger.info("Hotkey engine running")
         try:
-            with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+            with keyboard.Listener(on_press=on_press, on_release=on_release) as kb_listener:
+                self._kb_listener = kb_listener
                 while not self._stop_event.is_set():
-                    listener.join(timeout=0.5)
-                    if not listener.is_alive():
+                    kb_listener.join(timeout=0.5)
+                    if not kb_listener.is_alive():
                         break
         except Exception as e:
             logger.error(f"Fatal error in listener: {e}", exc_info=True)
+        finally:
+            self._kb_listener = None
