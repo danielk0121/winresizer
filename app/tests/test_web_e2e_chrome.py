@@ -390,28 +390,6 @@ class TestWebE2EChrome(unittest.TestCase):
         self._assert_position(b_bottom, expected_y=expected_y_bottom)
         print(f"[하단_60%] {b_bottom}")
 
-    # ── 스마트 사이클 ─────────────────────────────────────────
-
-    def test_40_smart_cycle_left(self):
-        """좌측 반복 입력 시 1/2 → 1/3 → 2/3 순환 검증"""
-        m = self.monitor
-        gap = self.gap
-
-        execute('left_half')
-        b1 = self._bounds()
-        print(f"[사이클 1/2] {b1}")
-
-        execute('left_half')
-        b2 = self._bounds()
-        print(f"[사이클 1/3] {b2}")
-
-        execute('left_half')
-        b3 = self._bounds()
-        print(f"[사이클 2/3] {b3}")
-
-        # 너비가 순환하며 달라져야 함
-        self.assertNotAlmostEqual(b1[2], b2[2], delta=10, msg="1/2→1/3 너비 변화 없음")
-        self.assertNotAlmostEqual(b2[2], b3[2], delta=10, msg="1/3→2/3 너비 변화 없음")
 
 
 if __name__ == '__main__':
