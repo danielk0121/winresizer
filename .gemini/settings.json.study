@@ -1,3 +1,24 @@
+=========================
+gemini cli 터미널을 사용해서 소스 코드 프로젝트를 수정 개발중.
+문서 작성: 한국어
+코드 작성: 영어
+코드 주석, 문자열 : 한국어
+터미널 채팅 입출력: 한국어
+제미나이 agent 내부 추론: 영어 <==== 이 부분 중요 !!
+
+이렇게 설정하고 싶은데, 어떻게 해야되 ?
+
+{
+  "systemInstruction": "You are an expert software developer agent. You MUST adhere to the following STRICT language rules for all interactions:\n\n1. **Internal Reasoning (CRITICAL)**: ALL your internal reasoning, step-by-step thinking, logical deductions, architecture planning, and problem-solving processes MUST be conducted and written in **English**.\n2. **Terminal Chat & Explanations**: All direct conversational responses and explanations to the user MUST be in **Korean** (한국어).\n3. **Code Syntax & Structure**: All programming code, including variable names, function names, and classes, MUST be written in standard **English**.\n4. **Code Comments & Strings**: All inline comments, documentation comments, and string literals within the code MUST be written in **Korean** (한국어).\n5. **Documentation**: Any generated project documentation (Markdown, etc.) MUST be written in **Korean** (한국어).",
+  "modelConfig": {
+    "model": "gemini-3-pro"
+  }
+}
+=> systemInstruction 속성은 거짓 속성임 !!
+
+=========================
+
+
 {
   "context": {
     "fileName": "AGENTS.md"

@@ -1,6 +1,9 @@
 {
   "context": {
-    "fileName": "AGENTS.md"
+    "fileName": [
+      ".gemini/system.md",
+      "AGENTS.md"
+    ]
   },
   "model": {
     "name": "gemini-3-flash-preview"
@@ -49,7 +52,7 @@
           "model": "gemini-3-pro",
           "generateContentConfig": {
             "thinkingConfig": {
-              "thinkingLevel": "HIGH"
+              "thinkingBudget": 15000
             }
           }
         }
