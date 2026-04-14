@@ -83,7 +83,7 @@ app/src/web_server.py    # Flask 설정 웹 서버
 
 ## 스크린샷
 
-![WinResizer 설정 화면](ref/img_3.png)
+![WinResizer 설정 화면](ref/img_4.png)
 
 ## 기능
 - **1/2 분할**: 좌측, 우측, 상단, 하단 절반 배치
