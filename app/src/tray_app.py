@@ -29,7 +29,7 @@ class TrayApp(rumps.App):
         self.listener.start()
 
         # Flask 웹 서버 시작 (40000번대 랜덤 포트)
-        self.flask_app, self.web_port = run_server(listener=self.listener)
+        self.flask_app, self.web_port = run_server()
 
     def _check_permissions(self):
         if not ApplicationServices.AXIsProcessTrusted():

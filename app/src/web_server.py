@@ -6,7 +6,6 @@ import os
 import sys
 from flask import Flask, jsonify, request, render_template
 from core import config_manager
-from core.hotkey_listener import HotkeyListenerThread
 from utils.logger import logger
 
 # PyInstaller 번들(_MEIPASS) 및 일반 실행 모두 대응하는 기준 경로
@@ -20,7 +19,6 @@ def create_app():
         template_folder=os.path.join(_BASE_DIR, 'templates'),
         static_folder=os.path.join(_BASE_DIR, 'static'),
     )
-    app.config['listener'] = None
 
     @app.route('/')
     def index():
@@ -52,24 +50,13 @@ def create_app():
 
     @app.route('/api/config/reset', methods=['POST'])
     def reset_config():
-        """설정을 기본값으로 초기화하고 리스너를 재시작합니다."""
+        """설정을 기본값으로 초기화합니다. 리스너는 다음 키 입력 시 자동으로 새 설정을 반영합니다."""
         default = {
             'shortcuts': {k: dict(v) for k, v in config_manager.DEFAULT_CONFIG.items()},
             'settings': dict(config_manager.DEFAULT_SETTINGS),
         }
         config_manager.save_config(default)
         config_manager._config_cache = None
-
-        listener = app.config.get('listener')
-        try:
-            if listener is not None:
-                listener.stop()
-            new_listener = HotkeyListenerThread()
-            new_listener.start()
-            app.config['listener'] = new_listener
-        except Exception as e:
-            logger.error(f"리스너 재시작 중 오류 발생: {e}", exc_info=True)
-
         logger.info("설정 기본값 초기화 완료")
         return jsonify({'status': 'ok', 'config': default})
 
@@ -80,20 +67,8 @@ def create_app():
             return jsonify({'error': '잘못된 요청입니다.'}), 400
 
         config_manager.save_config(data)
-        config_manager._config_cache = None  # 캐시 초기화
-
-        # 리스너 재시작
-        listener = app.config.get('listener')
-        try:
-            if listener is not None:
-                listener.stop()
-            new_listener = HotkeyListenerThread()
-            new_listener.start()
-            app.config['listener'] = new_listener
-        except Exception as e:
-            logger.error(f"리스너 재시작 중 오류 발생: {e}", exc_info=True)
-
-        logger.info("설정 저장 및 리스너 재시작 완료")
+        config_manager._config_cache = None  # 캐시 무효화 — 다음 키 입력 시 새 설정 자동 반영
+        logger.info("설정 저장 완료")
         return jsonify({'status': 'ok'})
 
     return app
@@ -114,7 +89,6 @@ def run_server(port=None, listener=None):
         port = find_free_port()
 
     app = create_app()
-    app.config['listener'] = listener
 
     server_thread = threading.Thread(
         target=lambda: app.run(host='127.0.0.1', port=port, debug=False, use_reloader=False),
