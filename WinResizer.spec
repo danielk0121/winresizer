@@ -5,7 +5,11 @@ a = Analysis(
     ['app/src/main.py'],
     pathex=['app/src'],
     binaries=[],
-    datas=[('app/src/ui/tray_icon.png', 'app/src/ui')],
+    datas=[
+        ('app/src/ui/tray_icon.png', 'app/src/ui'),
+        ('app/src/templates', 'templates'),
+        ('app/src/static', 'static'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

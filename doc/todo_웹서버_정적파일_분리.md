@@ -26,14 +26,13 @@ app/src/
 
 ## 작업 계획 (TODO)
 
-- [ ] `app/src/templates/index.html` 생성 — HTML 구조만 포함, CSS/JS는 외부 파일 참조
-- [ ] `app/src/static/style.css` 생성 — 기존 인라인 CSS 이동
-- [ ] `app/src/static/app.js` 생성 — 기존 인라인 JS 이동
-- [ ] `web_server.py`: `render_template_string` → `render_template` 교체, Flask 앱 생성 시 `template_folder` / `static_folder` 경로 지정 (PyInstaller `_MEIPASS` 대응)
-- [ ] `WinResizer.spec`: `datas`에 `templates/`, `static/` 폴더 추가
-- [ ] 앱 직접 실행(`app/venv/bin/python app/src/main.py`) 후 브라우저에서 설정 페이지 정상 동작 확인
-- [ ] 기존 단위/통합 테스트 전체 통과 확인
-- [ ] 커밋 푸시
+- [x] `app/src/templates/index.html` 생성 — HTML 구조만 포함, CSS/JS는 외부 파일 참조
+- [x] `app/src/static/style.css` 생성 — 기존 인라인 CSS 이동
+- [x] `app/src/static/app.js` 생성 — 기존 인라인 JS 이동
+- [x] `web_server.py`: `render_template_string` → `render_template` 교체, Flask 앱 생성 시 `template_folder` / `static_folder` 경로 지정 (PyInstaller `_MEIPASS` 대응)
+- [x] `WinResizer.spec`: `datas`에 `templates/`, `static/` 폴더 추가
+- [x] 기존 단위/통합 테스트 전체 통과 확인 (43개)
+- [x] 커밋 푸시
 
 ## 구현 상세
 

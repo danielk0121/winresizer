@@ -1,0 +1,45 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2b2b2b; color: #fff; font-family: -apple-system, sans-serif; padding: 24px; }
+h1 { font-size: 20px; margin-bottom: 20px; color: #eee; }
+.section { margin-bottom: 24px; }
+.section-title { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.label { width: 140px; font-size: 14px; color: #ccc; flex-shrink: 0; }
+.hotkey-btn {
+    flex: 1; padding: 7px 12px; background: #3a3a3a; border: 1px solid #555;
+    border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px; text-align: left;
+}
+.hotkey-btn.recording { border-color: #f39c12; background: #3d3520; color: #f39c12; }
+.delete-btn {
+    width: 28px; height: 28px; background: #444; border: none; border-radius: 4px;
+    color: #bbb; cursor: pointer; font-size: 14px; flex-shrink: 0;
+}
+.delete-btn:hover { background: #e74c3c; color: #fff; }
+.gap-row { display: flex; align-items: center; gap: 10px; }
+.gap-input {
+    width: 70px; padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
+    border-radius: 6px; color: #fff; font-size: 14px;
+}
+.save-btn {
+    width: 100%; padding: 12px; background: #2980b9;
+    border: none; border-radius: 8px; color: #fff; font-size: 15px;
+    font-weight: bold; cursor: pointer; margin-bottom: 10px;
+}
+.save-btn:hover { background: #3498db; }
+.clear-btn {
+    width: 100%; padding: 10px; background: #c0392b;
+    border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer;
+}
+.clear-btn:hover { background: #e74c3c; }
+#status { margin-top: 12px; text-align: center; font-size: 13px; color: #2ecc71; height: 20px; }
+.custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.custom-label { width: 80px; font-size: 14px; color: #ccc; flex-shrink: 0; }
+.pct-input {
+    width: 70px; padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
+    border-radius: 6px; color: #fff; font-size: 14px;
+}
+.apply-btn {
+    padding: 6px 16px; background: #27ae60; border: none; border-radius: 6px;
+    color: #fff; font-size: 14px; cursor: pointer; font-weight: bold;
+}
+.apply-btn:hover { background: #2ecc71; }
