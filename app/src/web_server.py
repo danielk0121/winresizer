@@ -67,6 +67,14 @@ def create_app():
         logger.info("설정 저장 완료")
         return jsonify({'status': 'ok'})
 
+    @app.after_request
+    def add_header(response):
+        """브라우저 캐시 방지 헤더 추가"""
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
     return app
 
 
