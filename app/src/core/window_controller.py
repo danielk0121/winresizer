@@ -8,7 +8,6 @@ from core.window_manager import (
 )
 from utils.helpers import apply_gap
 from core import config_manager
-from core.smart_cycler import determine_next_mode
 
 def parse_custom_mode(mode):
     """
@@ -122,7 +121,7 @@ def execute_window_command(mode):
                 pass
             return
 
-        # 6-b. 스마트 순환 로직
+        # 6-b. 다음 디스플레이 이동
         if mode == "다음_디스플레이":
             index = monitor_list.index(target_monitor)
             next_monitor = monitor_list[(index + 1) % len(monitor_list)]
@@ -130,8 +129,8 @@ def execute_window_command(mode):
             new_y = next_monitor['y'] + relative_bounds[1]
             set_window_bounds(target_window, new_x, new_y, min(current_bounds[2], next_monitor['width']), min(current_bounds[3], next_monitor['height']))
             return
-            
-        next_mode = determine_next_mode(mode, relative_bounds, screen_size, gap)
+
+        next_mode = mode
 
         # 7. 좌표 계산 및 적용
         result_coords = calculate_window_position(screen_size, next_mode)

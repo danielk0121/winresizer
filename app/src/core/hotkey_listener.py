@@ -55,11 +55,16 @@ class HotkeyListenerThread(threading.Thread):
                 config = config_manager.get_config()
                 hotkey_config = config.get('shortcuts', {})
                 
-                for cfg in hotkey_config.values():
+                # custom 모드를 일반 모드보다 먼저 검사 (동일 키 조합 충돌 방지)
+                sorted_configs = sorted(
+                    hotkey_config.values(),
+                    key=lambda c: 0 if '_custom:' in c.get('mode', '') else 1
+                )
+                for cfg in sorted_configs:
                     pynput_str = cfg.get('pynput')
                     if not pynput_str:
                         continue
-                    
+
                     required_keys = set(pynput_str.replace('<', '').replace('>', '').split('+'))
                     if required_keys.issubset(currently_pressed_keys):
                         # Apply cooldown (0.2s)
