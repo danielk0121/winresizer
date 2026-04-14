@@ -50,10 +50,7 @@ HTML_TEMPLATE = """
         .clear-btn:hover { background: #e74c3c; }
         #status { margin-top: 12px; text-align: center; font-size: 13px; color: #2ecc71; height: 20px; }
         .custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .direction-select {
-            padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
-            border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer;
-        }
+        .custom-label { width: 80px; font-size: 14px; color: #ccc; flex-shrink: 0; }
         .pct-input {
             width: 70px; padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
             border-radius: 6px; color: #fff; font-size: 14px;
@@ -83,18 +80,39 @@ HTML_TEMPLATE = """
 
     <div class="section">
         <div class="section-title">커스텀 비율 창 조절</div>
+        <div style="font-size:12px; color:#666; margin-bottom:10px;">비율(1~99%)을 입력하고 단축키를 설정하세요. 적용 버튼으로 즉시 실행도 가능합니다.</div>
         <div class="custom-row">
-            <select class="direction-select" id="custom-direction">
-                <option value="left">좌측</option>
-                <option value="right">우측</option>
-                <option value="top">상단</option>
-                <option value="bottom">하단</option>
-            </select>
-            <input class="pct-input" id="custom-pct" type="number" min="1" max="99" value="75" placeholder="1~99">
+            <span class="custom-label">좌측</span>
+            <input class="pct-input" id="pct-left" type="number" min="1" max="99" value="75" placeholder="1~99">
             <span style="color:#aaa; font-size:14px;">%</span>
-            <button class="apply-btn" onclick="applyCustom()">적용</button>
+            <button class="hotkey-btn" id="btn-Left Custom" style="flex:1;" onclick="startRecording('Left Custom')">단축키 입력</button>
+            <button class="delete-btn" onclick="deleteHotkey('Left Custom')">✕</button>
+            <button class="apply-btn" onclick="applyCustomDirect('left', 'pct-left')">적용</button>
         </div>
-        <div style="font-size:12px; color:#666; margin-top:4px;">현재 포커스된 창을 지정 비율로 즉시 이동합니다.</div>
+        <div class="custom-row">
+            <span class="custom-label">우측</span>
+            <input class="pct-input" id="pct-right" type="number" min="1" max="99" value="75" placeholder="1~99">
+            <span style="color:#aaa; font-size:14px;">%</span>
+            <button class="hotkey-btn" id="btn-Right Custom" style="flex:1;" onclick="startRecording('Right Custom')">단축키 입력</button>
+            <button class="delete-btn" onclick="deleteHotkey('Right Custom')">✕</button>
+            <button class="apply-btn" onclick="applyCustomDirect('right', 'pct-right')">적용</button>
+        </div>
+        <div class="custom-row">
+            <span class="custom-label">상단</span>
+            <input class="pct-input" id="pct-top" type="number" min="1" max="99" value="75" placeholder="1~99">
+            <span style="color:#aaa; font-size:14px;">%</span>
+            <button class="hotkey-btn" id="btn-Top Custom" style="flex:1;" onclick="startRecording('Top Custom')">단축키 입력</button>
+            <button class="delete-btn" onclick="deleteHotkey('Top Custom')">✕</button>
+            <button class="apply-btn" onclick="applyCustomDirect('top', 'pct-top')">적용</button>
+        </div>
+        <div class="custom-row">
+            <span class="custom-label">하단</span>
+            <input class="pct-input" id="pct-bottom" type="number" min="1" max="99" value="75" placeholder="1~99">
+            <span style="color:#aaa; font-size:14px;">%</span>
+            <button class="hotkey-btn" id="btn-Bottom Custom" style="flex:1;" onclick="startRecording('Bottom Custom')">단축키 입력</button>
+            <button class="delete-btn" onclick="deleteHotkey('Bottom Custom')">✕</button>
+            <button class="apply-btn" onclick="applyCustomDirect('bottom', 'pct-bottom')">적용</button>
+        </div>
     </div>
 
     <button class="save-btn" onclick="saveConfig()">저장 및 적용</button>
@@ -105,17 +123,30 @@ HTML_TEMPLATE = """
         let config = {};
         let recordingKey = null;
 
+        // 커스텀 비율 키 목록 (웹 UI 커스텀 섹션에서 별도 렌더링)
+        const CUSTOM_KEYS = ['Left Custom', 'Right Custom', 'Top Custom', 'Bottom Custom'];
+        // 커스텀 키와 비율 입력 id 매핑
+        const CUSTOM_PCT_IDS = {
+            'Left Custom': 'pct-left',
+            'Right Custom': 'pct-right',
+            'Top Custom': 'pct-top',
+            'Bottom Custom': 'pct-bottom',
+        };
+
         async function loadConfig() {
             const res = await fetch('/api/config');
             config = await res.json();
             document.getElementById('gap').value = config.settings?.gap ?? 5;
             renderHotkeys();
+            renderCustomHotkeys();
         }
 
         function renderHotkeys() {
             const list = document.getElementById('hotkey-list');
             list.innerHTML = '';
             for (const [name, info] of Object.entries(config.shortcuts || {})) {
+                // 커스텀 비율 키는 커스텀 섹션에서 별도 렌더링
+                if (CUSTOM_KEYS.includes(name)) continue;
                 const row = document.createElement('div');
                 row.className = 'row';
                 row.innerHTML = `
@@ -124,6 +155,23 @@ HTML_TEMPLATE = """
                     <button class="delete-btn" onclick="deleteHotkey('${name}')">✕</button>
                 `;
                 list.appendChild(row);
+            }
+        }
+
+        function renderCustomHotkeys() {
+            // 커스텀 비율 키의 단축키 표시 및 비율값 반영
+            for (const name of CUSTOM_KEYS) {
+                const info = config.shortcuts?.[name];
+                if (!info) continue;
+                const btn = document.getElementById('btn-' + name);
+                if (btn) btn.textContent = info.display || '단축키 입력';
+                // mode에서 비율값 추출해 입력창에 반영
+                const pctId = CUSTOM_PCT_IDS[name];
+                const mode = info.mode || '';
+                const match = mode.match(/_custom:(\\d+)$/);
+                if (match && pctId) {
+                    document.getElementById(pctId).value = match[1];
+                }
             }
         }
 
@@ -195,6 +243,23 @@ HTML_TEMPLATE = """
             config.settings = config.settings || {};
             config.settings.gap = parseInt(document.getElementById('gap').value) || 0;
 
+            // 커스텀 비율 mode를 현재 입력값으로 갱신
+            const dirMap = {
+                'Left Custom': 'left',
+                'Right Custom': 'right',
+                'Top Custom': 'top',
+                'Bottom Custom': 'bottom',
+            };
+            for (const [name, dir] of Object.entries(dirMap)) {
+                const pctId = CUSTOM_PCT_IDS[name];
+                const pct = parseInt(document.getElementById(pctId).value);
+                if (!isNaN(pct) && pct >= 1 && pct <= 99) {
+                    if (config.shortcuts[name]) {
+                        config.shortcuts[name].mode = `${dir}_custom:${pct}`;
+                    }
+                }
+            }
+
             const res = await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -209,9 +274,8 @@ HTML_TEMPLATE = """
             setTimeout(() => status.textContent = '', 3000);
         }
 
-        async function applyCustom() {
-            const direction = document.getElementById('custom-direction').value;
-            const pct = parseInt(document.getElementById('custom-pct').value);
+        async function applyCustomDirect(direction, pctInputId) {
+            const pct = parseInt(document.getElementById(pctInputId).value);
             const status = document.getElementById('status');
             if (isNaN(pct) || pct < 1 || pct > 99) {
                 status.style.color = '#e74c3c';

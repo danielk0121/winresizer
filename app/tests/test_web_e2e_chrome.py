@@ -339,6 +339,57 @@ class TestWebE2EChrome(unittest.TestCase):
         b_after = self._bounds()
         self.assertAlmostEqual(b_before[0], b_after[0], delta=20, msg="무효 모드에서 창이 이동함")
 
+    # ── 커스텀 비율 단축키 설정 저장 ─────────────────────────────
+
+    def test_55_custom_mode_saved_on_config_post(self):
+        """POST /api/config 로 Left Custom mode 저장 시 비율값이 반영되는지 검증"""
+        import requests as req
+        res = req.get(f'{BASE_URL}/api/config', timeout=5)
+        cfg = res.json()
+        cfg['shortcuts']['Left Custom']['mode'] = 'left_custom:60'
+        post_res = req.post(f'{BASE_URL}/api/config', json=cfg, timeout=5)
+        self.assertEqual(post_res.status_code, 200)
+
+        # 저장된 값 확인
+        res2 = req.get(f'{BASE_URL}/api/config', timeout=5)
+        updated = res2.json()
+        self.assertEqual(updated['shortcuts']['Left Custom']['mode'], 'left_custom:60',
+                         "Left Custom mode가 저장된 비율(60)을 반영해야 함")
+        print("\n[OK] Left Custom mode 저장/조회 정상")
+
+    def test_56_all_custom_directions_independent(self):
+        """좌/우/상/하 커스텀 비율이 각각 독립적으로 동작하는지 검증"""
+        m = self.monitor
+        gap = self.gap
+
+        # 먼저 최대화로 충분한 크기 확보 후 각 방향 검증
+        execute('maximize')
+        time.sleep(0.3)
+
+        execute('left_custom:50')
+        b_left = self._bounds()
+        expected_w_left = m['width'] * 0.50 - gap * 2
+        self._assert_position(b_left, expected_x=m['x'] + gap, expected_w=expected_w_left)
+        print(f"[좌측_50%] {b_left}")
+
+        execute('right_custom:40')
+        b_right = self._bounds()
+        expected_x_right = m['x'] + m['width'] * 0.60 + gap
+        self._assert_position(b_right, expected_x=expected_x_right)
+        print(f"[우측_40%] {b_right}")
+
+        execute('top_custom:50')
+        b_top = self._bounds()
+        expected_h_top = m['height'] * 0.50 - gap * 2
+        self._assert_position(b_top, expected_y=m['y'] + gap, expected_h=expected_h_top)
+        print(f"[상단_50%] {b_top}")
+
+        execute('bottom_custom:60')
+        b_bottom = self._bounds()
+        expected_y_bottom = m['y'] + m['height'] * 0.40 + gap
+        self._assert_position(b_bottom, expected_y=expected_y_bottom)
+        print(f"[하단_60%] {b_bottom}")
+
     # ── 스마트 사이클 ─────────────────────────────────────────
 
     def test_40_smart_cycle_left(self):

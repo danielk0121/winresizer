@@ -27,6 +27,7 @@
 
 ## 작업 계획 (TODO)
 
+### 1차 구현 (완료)
 - [x] todo 문서 작성
 - [x] `coordinate_calculator.py`: `left_custom:N`, `right_custom:N`, `top_custom:N`, `bottom_custom:N` 계산 로직 추가
 - [x] `window_controller.py`: `parse_custom_mode()`, `is_valid_custom_mode()` 추가, 실행 흐름 분기 추가
@@ -35,6 +36,12 @@
 - [x] `web_server.py`: HTML 템플릿에 커스텀 비율 입력 UI 추가 (방향 선택 + 비율 입력 + 적용 버튼)
 - [x] Chrome E2E 테스트 5개 추가 및 전체 18개 통과
 - [x] 커밋 푸시
+
+### 2차 구현 - 방향별 독립 단축키 지원
+- [x] `config_manager.py`: `DEFAULT_CONFIG`에 커스텀 비율 4개 항목 추가 (`Left Custom`, `Right Custom`, `Top Custom`, `Bottom Custom`), `load_config()`에서 커스텀 비율 키 동적 로드 지원
+- [x] `web_server.py`: 커스텀 비율 섹션을 좌/우/상/하 4개 독립 행으로 변경, 각 행에 비율 입력 + 단축키 설정 + 적용 버튼 포함, 저장 시 비율값이 mode에 반영되도록 처리
+- [x] `tests/test_web_e2e_chrome.py`: 커스텀 비율 4개 단축키 저장/적용 E2E 테스트 추가 (test_55, test_56)
+- [x] 전체 테스트 통과 확인 후 커밋
 
 ## 구현 설계
 

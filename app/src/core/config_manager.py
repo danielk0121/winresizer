@@ -24,6 +24,10 @@ DEFAULT_CONFIG = {
     'Right 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_2/3'},
     'Maximize': {'pynput': '', 'display': '단축키 입력', 'mode': 'maximize'},
     'Restore': {'pynput': '', 'display': '단축키 입력', 'mode': 'restore'},
+    'Left Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'left_custom:75'},
+    'Right Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_custom:75'},
+    'Top Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_custom:75'},
+    'Bottom Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'bottom_custom:75'},
 }
 
 # 기본 시스템 설정 (간격 등)
