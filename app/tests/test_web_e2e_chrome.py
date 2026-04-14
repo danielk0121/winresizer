@@ -279,6 +279,66 @@ class TestWebE2EChrome(unittest.TestCase):
             expected_y=m['y'] + m['height'] // 2 + gap,
         )
 
+    # ── 커스텀 비율 ───────────────────────────────────────────
+
+    def test_50_left_custom_75(self):
+        """좌측 75% 배치 검증"""
+        m = self.monitor
+        gap = self.gap
+        execute('left_custom:75')
+        b = self._bounds()
+        print(f"[좌측_75%] {b}")
+        expected_w = m['width'] * 0.75 - gap * 2
+        self._assert_position(b,
+            expected_x=m['x'] + gap,
+            expected_w=expected_w,
+        )
+
+    def test_51_right_custom_30(self):
+        """우측 30% 배치 검증"""
+        m = self.monitor
+        gap = self.gap
+        execute('right_custom:30')
+        b = self._bounds()
+        print(f"[우측_30%] {b}")
+        expected_x = m['x'] + m['width'] * 0.70 + gap
+        self._assert_position(b,
+            expected_x=expected_x,
+        )
+
+    def test_52_top_custom_60(self):
+        """상단 60% 배치 검증"""
+        m = self.monitor
+        gap = self.gap
+        execute('top_custom:60')
+        b = self._bounds()
+        print(f"[상단_60%] {b}")
+        expected_h = m['height'] * 0.60 - gap * 2
+        self._assert_position(b,
+            expected_y=m['y'] + gap,
+            expected_h=expected_h,
+        )
+
+    def test_53_bottom_custom_40(self):
+        """하단 40% 배치 검증"""
+        m = self.monitor
+        gap = self.gap
+        execute('bottom_custom:40')
+        b = self._bounds()
+        print(f"[하단_40%] {b}")
+        expected_y = m['y'] + m['height'] * 0.60 + gap
+        self._assert_position(b,
+            expected_y=expected_y,
+        )
+
+    def test_54_invalid_custom_ignored(self):
+        """유효하지 않은 커스텀 비율(0, 100)은 창이 이동하지 않아야 함"""
+        execute('left_half')
+        b_before = self._bounds()
+        execute('left_custom:0')
+        b_after = self._bounds()
+        self.assertAlmostEqual(b_before[0], b_after[0], delta=20, msg="무효 모드에서 창이 이동함")
+
     # ── 스마트 사이클 ─────────────────────────────────────────
 
     def test_40_smart_cycle_left(self):

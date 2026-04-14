@@ -49,6 +49,20 @@ HTML_TEMPLATE = """
         }
         .clear-btn:hover { background: #e74c3c; }
         #status { margin-top: 12px; text-align: center; font-size: 13px; color: #2ecc71; height: 20px; }
+        .custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .direction-select {
+            padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
+            border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer;
+        }
+        .pct-input {
+            width: 70px; padding: 6px 10px; background: #3a3a3a; border: 1px solid #555;
+            border-radius: 6px; color: #fff; font-size: 14px;
+        }
+        .apply-btn {
+            padding: 6px 16px; background: #27ae60; border: none; border-radius: 6px;
+            color: #fff; font-size: 14px; cursor: pointer; font-weight: bold;
+        }
+        .apply-btn:hover { background: #2ecc71; }
     </style>
 </head>
 <body>
@@ -65,6 +79,22 @@ HTML_TEMPLATE = """
     <div class="section">
         <div class="section-title">단축키</div>
         <div id="hotkey-list"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">커스텀 비율 창 조절</div>
+        <div class="custom-row">
+            <select class="direction-select" id="custom-direction">
+                <option value="left">좌측</option>
+                <option value="right">우측</option>
+                <option value="top">상단</option>
+                <option value="bottom">하단</option>
+            </select>
+            <input class="pct-input" id="custom-pct" type="number" min="1" max="99" value="75" placeholder="1~99">
+            <span style="color:#aaa; font-size:14px;">%</span>
+            <button class="apply-btn" onclick="applyCustom()">적용</button>
+        </div>
+        <div style="font-size:12px; color:#666; margin-top:4px;">현재 포커스된 창을 지정 비율로 즉시 이동합니다.</div>
     </div>
 
     <button class="save-btn" onclick="saveConfig()">저장 및 적용</button>
@@ -177,6 +207,32 @@ HTML_TEMPLATE = """
                 status.textContent = '저장 실패.';
             }
             setTimeout(() => status.textContent = '', 3000);
+        }
+
+        async function applyCustom() {
+            const direction = document.getElementById('custom-direction').value;
+            const pct = parseInt(document.getElementById('custom-pct').value);
+            const status = document.getElementById('status');
+            if (isNaN(pct) || pct < 1 || pct > 99) {
+                status.style.color = '#e74c3c';
+                status.textContent = '비율은 1~99 사이 정수를 입력하세요.';
+                setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 3000);
+                return;
+            }
+            const mode = `${direction}_custom:${pct}`;
+            const res = await fetch('/api/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            if (res.ok) {
+                status.style.color = '#2ecc71';
+                status.textContent = `${direction} ${pct}% 적용 완료`;
+            } else {
+                status.style.color = '#e74c3c';
+                status.textContent = '적용 실패';
+            }
+            setTimeout(() => { status.textContent = ''; status.style.color = '#2ecc71'; }, 2000);
         }
 
         loadConfig();

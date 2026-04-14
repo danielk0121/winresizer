@@ -28,13 +28,13 @@
 ## 작업 계획 (TODO)
 
 - [x] todo 문서 작성
-- [ ] `coordinate_calculator.py`: `left_custom:N`, `right_custom:N`, `top_custom:N`, `bottom_custom:N` 계산 로직 추가
-- [ ] `window_controller.py`: custom 모드 파싱 및 유효성 검사 추가
-- [ ] `tests/test_coordinate_calculator.py`: 커스텀 비율 계산 단위 테스트
-- [ ] `tests/test_window_controller_custom.py`: 유효성 검사 및 실행 흐름 테스트
-- [ ] `web_server.py`: HTML 템플릿에 커스텀 비율 입력 UI 추가
-- [ ] Chrome E2E 테스트로 실제 창 이동 검증
-- [ ] 커밋 푸시
+- [x] `coordinate_calculator.py`: `left_custom:N`, `right_custom:N`, `top_custom:N`, `bottom_custom:N` 계산 로직 추가
+- [x] `window_controller.py`: `parse_custom_mode()`, `is_valid_custom_mode()` 추가, 실행 흐름 분기 추가
+- [x] `tests/test_coordinate_calculator.py`: 커스텀 비율 계산 단위 테스트 5개
+- [x] `tests/test_window_controller_custom.py`: 파싱/유효성 검사 테스트 13개
+- [x] `web_server.py`: HTML 템플릿에 커스텀 비율 입력 UI 추가 (방향 선택 + 비율 입력 + 적용 버튼)
+- [x] Chrome E2E 테스트 5개 추가 및 전체 18개 통과
+- [x] 커밋 푸시
 
 ## 구현 설계
 

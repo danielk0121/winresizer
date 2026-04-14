@@ -41,5 +41,20 @@ def calculate_window_position(screen_size, mode, gap=0):
     # Maximize
     if mode == "maximize":
         return (gap, gap, screen_width - (gap * 2), screen_height - (gap * 2))
-    
+
+    # Custom ratio: left_custom:N, right_custom:N, top_custom:N, bottom_custom:N
+    if "_custom:" in mode:
+        direction, pct_str = mode.split("_custom:")
+        pct = int(pct_str) / 100
+        if direction == "left":
+            return (gap, gap, screen_width * pct - gap * 2, screen_height - gap * 2)
+        if direction == "right":
+            start_x = screen_width * (1 - pct)
+            return (start_x + gap, gap, screen_width * pct - gap * 2, screen_height - gap * 2)
+        if direction == "top":
+            return (gap, gap, screen_width - gap * 2, screen_height * pct - gap * 2)
+        if direction == "bottom":
+            start_y = screen_height * (1 - pct)
+            return (gap, start_y + gap, screen_width - gap * 2, screen_height * pct - gap * 2)
+
     return (gap, gap, screen_width - (gap * 2), screen_height - (gap * 2))

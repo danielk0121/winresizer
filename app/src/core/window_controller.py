@@ -10,6 +10,33 @@ from utils.helpers import apply_gap
 from core import config_manager
 from core.smart_cycler import determine_next_mode
 
+def parse_custom_mode(mode):
+    """
+    커스텀 비율 모드 문자열을 파싱합니다.
+    'left_custom:75' → ('left', 75)
+    커스텀 모드가 아니면 None 반환.
+    """
+    if not isinstance(mode, str) or "_custom:" not in mode:
+        return None
+    try:
+        direction, pct_str = mode.split("_custom:")
+        return (direction, int(pct_str))
+    except (ValueError, AttributeError):
+        return None
+
+
+def is_valid_custom_mode(mode):
+    """
+    커스텀 비율 모드의 유효성을 검사합니다.
+    유효 조건: 커스텀 모드이고 비율이 1~99 정수.
+    """
+    parsed = parse_custom_mode(mode)
+    if parsed is None:
+        return False
+    _, pct = parsed
+    return 1 <= pct <= 99
+
+
 def execute_window_command(mode):
     """
     지정된 모드(예: '좌측_절반', '복구' 등)에 따라 활성 윈도우의 크기와 위치를 조정합니다.
@@ -77,7 +104,25 @@ def execute_window_command(mode):
         screen_size = (target_monitor['width'], target_monitor['height'])
         relative_bounds = (current_bounds[0] - target_monitor['x'], current_bounds[1] - target_monitor['y'], current_bounds[2], current_bounds[3])
 
-        # 6. 스마트 순환 로직
+        # 6-a. 커스텀 비율 모드 처리
+        if "_custom:" in mode:
+            if not is_valid_custom_mode(mode):
+                logger.warning(f"유효하지 않은 커스텀 비율 모드: {mode} (비율은 1~99 정수)")
+                return
+            result_coords = calculate_window_position(screen_size, mode, gap)
+            x_relative, y_relative, width, height = result_coords
+            set_window_bounds(target_window,
+                              x_relative + target_monitor['x'],
+                              y_relative + target_monitor['y'],
+                              width, height)
+            logger.info(f"Window command completed: {mode}")
+            try:
+                activate_application(active_app.processIdentifier())
+            except Exception:
+                pass
+            return
+
+        # 6-b. 스마트 순환 로직
         if mode == "다음_디스플레이":
             index = monitor_list.index(target_monitor)
             next_monitor = monitor_list[(index + 1) % len(monitor_list)]
