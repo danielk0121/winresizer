@@ -311,12 +311,22 @@ document.addEventListener('keydown', (e) => {
     stopRecording();
 });
 
-function deleteHotkey(keyName) {
-    config.shortcuts[keyName].pynput = '';
-    config.shortcuts[keyName].display = '';
-    renderHotkeys();
-    renderCustomHotkeys();
-    renderGap();
+function getTimeString() {
+    const now = new Date();
+    const tzo = -now.getTimezoneOffset();
+    const dif = tzo >= 0 ? '+' : '-';
+    const pad = (num) => String(num).padStart(2, '0');
+    
+    const iso = now.getFullYear() +
+        '-' + pad(now.getMonth() + 1) +
+        '-' + pad(now.getDate()) +
+        'T' + pad(now.getHours()) +
+        ':' + pad(now.getMinutes()) +
+        ':' + pad(now.getSeconds()) +
+        '.' + String(now.getMilliseconds()).padStart(3, '0') +
+        dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+        ':' + pad(Math.abs(tzo) % 60);
+    return `[${iso}] `;
 }
 
 function clearAll() {
@@ -331,7 +341,7 @@ function clearAll() {
     
     const status = document.getElementById('status');
     status.style.color = '#f39c12';
-    status.textContent = t('clearDone');
+    status.textContent = getTimeString() + t('clearDone');
 }
 
 async function saveConfig() {
@@ -350,7 +360,7 @@ async function saveConfig() {
         const pct = parseInt(raw);
         if (raw === '' || isNaN(pct) || pct < 1 || pct > 100 || String(pct) !== raw.trim()) {
             status.style.color = '#e74c3c';
-            status.textContent = t('pctError');
+            status.textContent = getTimeString() + t('pctError');
             return;
         }
     }
@@ -367,7 +377,7 @@ async function saveConfig() {
     if (conflicts.length > 0) {
         const conflictDesc = conflicts.map(names => names.map(hotkeyLabel).join(' ↔ ')).join(', ');
         status.style.color = '#e74c3c';
-        status.textContent = t('duplicateError', conflictDesc);
+        status.textContent = getTimeString() + t('duplicateError', conflictDesc);
         return;
     }
 
@@ -393,10 +403,10 @@ async function saveConfig() {
         renderCustomHotkeys();
         renderGap();
         status.style.color = '#2ecc71';
-        status.textContent = t('saveDone');
+        status.textContent = getTimeString() + t('saveDone');
     } else {
         status.style.color = '#e74c3c';
-        status.textContent = t('saveFail');
+        status.textContent = getTimeString() + t('saveFail');
     }
 }
 
@@ -409,10 +419,10 @@ async function resetConfig() {
         config = data.config; // 로컬 설정만 업데이트 (initialConfig는 그대로 두어 음영 발생 유도)
         loadConfigUI();
         status.style.color = '#f39c12';
-        status.textContent = t('resetDone') + ' (저장 버튼을 눌러야 반영됩니다)';
+        status.textContent = getTimeString() + t('resetDone') + ' (저장 버튼을 눌러야 반영됩니다)';
     } else {
         status.style.color = '#e74c3c';
-        status.textContent = t('resetFail');
+        status.textContent = getTimeString() + t('resetFail');
     }
 }
 
