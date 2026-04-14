@@ -9,10 +9,10 @@ def ensure_config_dir():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 DEFAULT_CONFIG = {
-    'Left': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': 'ctrl + alt + cmd + left', 'mode': 'left_half'},
-    'Right': {'pynput': '<ctrl>+<alt>+<cmd>+<right>', 'display': 'ctrl + alt + cmd + right', 'mode': 'right_half'},
-    'Top': {'pynput': '<ctrl>+<alt>+<cmd>+<up>', 'display': 'ctrl + alt + cmd + up', 'mode': 'top_half'},
-    'Bottom': {'pynput': '<ctrl>+<alt>+<cmd>+<down>', 'display': 'ctrl + alt + cmd + down', 'mode': 'bottom_half'},
+    'Left': {'pynput': '<alt>+<cmd>+<shift>+<left>', 'display': 'alt + cmd + shift + left', 'mode': 'left_half'},
+    'Right': {'pynput': '<alt>+<cmd>+<shift>+<right>', 'display': 'alt + cmd + shift + right', 'mode': 'right_half'},
+    'Top': {'pynput': '<alt>+<cmd>+<shift>+<up>', 'display': 'alt + cmd + shift + up', 'mode': 'top_half'},
+    'Bottom': {'pynput': '<alt>+<cmd>+<shift>+<down>', 'display': 'alt + cmd + shift + down', 'mode': 'bottom_half'},
     'Top Left 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_left_1/4'},
     'Top Right 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_right_1/4'},
     'Bottom Left 1/4': {'pynput': '', 'display': '단축키 입력', 'mode': 'bottom_left_1/4'},
@@ -24,10 +24,10 @@ DEFAULT_CONFIG = {
     'Right 2/3': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_2/3'},
     'Maximize': {'pynput': '', 'display': '단축키 입력', 'mode': 'maximize'},
     'Restore': {'pynput': '', 'display': '단축키 입력', 'mode': 'restore'},
-    'Left Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'left_custom:75'},
-    'Right Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'right_custom:75'},
-    'Top Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'top_custom:75'},
-    'Bottom Custom': {'pynput': '', 'display': '단축키 입력', 'mode': 'bottom_custom:75'},
+    'Left Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<left>', 'display': 'ctrl + alt + cmd + left', 'mode': 'left_custom:90'},
+    'Right Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<right>', 'display': 'ctrl + alt + cmd + right', 'mode': 'right_custom:90'},
+    'Top Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<up>', 'display': 'ctrl + alt + cmd + up', 'mode': 'top_custom:90'},
+    'Bottom Custom': {'pynput': '<ctrl>+<alt>+<cmd>+<down>', 'display': 'ctrl + alt + cmd + down', 'mode': 'bottom_custom:90'},
 }
 
 # 기본 시스템 설정 (간격 등)
