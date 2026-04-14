@@ -39,7 +39,7 @@ h1 { font-size: 18px; color: #eee; }
 .clear-btn:hover { background: #e74c3c; }
 .reset-btn { background: #555; color: #ccc; }
 .reset-btn:hover { background: #666; color: #fff; }
-#status { margin-top: 6px; text-align: center; font-size: 12px; color: #2ecc71; height: 16px; }
+#status { margin-top: 6px; text-align: center; font-size: 12px; color: #2ecc71; min-height: 32px; white-space: pre-line; line-height: 1.4; }
 .custom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
 .custom-label { width: 80px; font-size: 13px; color: #ccc; flex-shrink: 0; }
 .pct-input {

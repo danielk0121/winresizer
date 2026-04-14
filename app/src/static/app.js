@@ -326,7 +326,7 @@ function getTimeString() {
         '.' + String(now.getMilliseconds()).padStart(3, '0') +
         dif + pad(Math.floor(Math.abs(tzo) / 60)) +
         ':' + pad(Math.abs(tzo) % 60);
-    return `[${iso}] `;
+    return `[${iso}]\n`;
 }
 
 function clearAll() {
