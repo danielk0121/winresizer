@@ -20,10 +20,16 @@ def get_resource_path(relative_path):
     PyInstaller 환경과 로컬 실행 환경 모두에서 리소스 파일의 절대 경로를 반환합니다.
     """
     try:
-        # PyInstaller로 빌드된 경우, 임시 폴더 경로를 반환
+        # PyInstaller로 빌드된 경우
         base_path = sys._MEIPASS
+        # macOS 번들인 경우 sys._MEIPASS가 종종 Contents/Frameworks를 가리킴. 
+        # 실제 리소스는 Contents/Resources에 있으므로 이를 보정.
+        if "Contents/Frameworks" in base_path:
+            resources_path = os.path.join(os.path.dirname(base_path), "Resources")
+            if os.path.exists(os.path.join(resources_path, relative_path)):
+                base_path = resources_path
     except AttributeError:
-        # 로컬 환경인 경우, 프로젝트 루트 폴더 기준 경로를 계산 (app/src/utils/helpers.py 기준)
+        # 로컬 환경인 경우
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     
     resolved_path = os.path.join(base_path, relative_path)

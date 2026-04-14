@@ -13,21 +13,30 @@ class TrayApp(rumps.App):
     rumps 기반으로 PyQt5 없이 동작한다.
     """
     def __init__(self):
-        # PyInstaller BUNDLE 모드에서는 리소스 루트('.')에 파일이 위치함
+        # 1. 아이콘 경로 결정
         icon_path = get_resource_path("tray_icon.png")
-        logger.info(f"트레이 앱 초기화 시작 - 아이콘 경로: {icon_path}")
+        logger.info(f"트레이 앱 초기화 시작 (아이콘 경로: {icon_path})")
         
         if not os.path.exists(icon_path):
-            logger.error(f"아이콘 파일이 존재하지 않습니다: {icon_path}")
+            logger.warning(f"아이콘 파일 없음: {icon_path}")
             icon_path = None
         
-        super().__init__("WinResizer", icon=icon_path, template=True, quit_button=None)
+        # 2. rumps.App 초기화 (여기가 멈춤 포인트)
+        try:
+            logger.info("rumps.App super().__init__ 진입")
+            super().__init__("WinResizer", icon=icon_path, template=True, quit_button=None)
+            logger.info("rumps.App super().__init__ 통과")
+        except Exception as e:
+            logger.error(f"rumps 초기화 에러: {e}. 아이콘 없이 재시도.")
+            super().__init__("WinResizer", quit_button=None)
 
+        # 3. 메뉴 구성
         self.menu = [
             rumps.MenuItem("설정 (Preferences...)", callback=self.open_settings),
             None,  # 구분선
             rumps.MenuItem("종료 (Quit)", callback=self.quit_app),
         ]
+        logger.info("트레이 메뉴 구성 완료")
 
         # 접근성 권한 확인
         self._check_permissions()
