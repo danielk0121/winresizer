@@ -11,7 +11,7 @@ h1 { font-size: 18px; color: #eee; }
 .section { margin-bottom: 14px; }
 .section-title { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
 .row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; transition: background-color 0.3s; padding: 2px 4px; }
-.row.modified, .custom-row.modified { background-color: rgba(243, 156, 18, 0.2) !important; border-radius: 4px; }
+.row.modified, .custom-row.modified, .gap-row.modified { background-color: rgba(255, 255, 0, 0.15) !important; border-radius: 4px; }
 .label { width: 140px; font-size: 13px; color: #ccc; flex-shrink: 0; }
 .hotkey-btn {
     flex: 1; padding: 5px 10px; background: #3a3a3a; border: 1px solid #555;

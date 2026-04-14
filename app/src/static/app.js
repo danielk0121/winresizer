@@ -142,10 +142,20 @@ async function loadConfig() {
     const res = await fetch('/api/config');
     config = await res.json();
     initialConfig = deepCopy(config);
+    loadConfigUI();
+}
+
+function loadConfigUI() {
     document.getElementById('gap').value = config.settings?.gap ?? 5;
+    // 커스텀 행 초기화 플래그 제거
+    for (const name of CUSTOM_KEYS) {
+        const row = document.getElementById('row-' + name);
+        if (row) delete row.dataset.initialized;
+    }
     applyLang();
     renderHotkeys();
     renderCustomHotkeys();
+    renderGap();
 }
 
 function isModified(name) {
@@ -153,15 +163,26 @@ function isModified(name) {
     const ini = initialConfig.shortcuts?.[name];
     if (!cur || !ini) return false;
     
-    // pynput 비교
+    // pynput 비교 (단축키 삭제 포함)
     if (cur.pynput !== ini.pynput) return true;
     
     // 커스텀 비율 모드인 경우 비율 비교
     if (CUSTOM_KEYS.includes(name)) {
-        if (cur.mode !== ini.mode) return true;
+        const pctId = CUSTOM_PCT_IDS[name];
+        const curPct = document.getElementById(pctId).value;
+        const mode = ini.mode || '';
+        const match = mode.match(/_custom:(\d+)$/);
+        const iniPct = match ? match[1] : '';
+        if (curPct !== iniPct) return true;
     }
     
     return false;
+}
+
+function isGapModified() {
+    const curGap = document.getElementById('gap').value;
+    const iniGap = initialConfig.settings?.gap ?? 5;
+    return parseInt(curGap) !== iniGap;
 }
 
 function renderHotkeys() {
@@ -198,12 +219,23 @@ function renderCustomHotkeys() {
         if (btn && !btn.classList.contains('recording')) {
             btn.textContent = info.pynput ? info.display : t('hotkeyDefault');
         }
-        const pctId = CUSTOM_PCT_IDS[name];
-        const mode = info.mode || '';
-        const match = mode.match(/_custom:(\d+)$/);
-        if (match && pctId) {
-            document.getElementById(pctId).value = match[1];
+        // 비율 값 초기 로딩 시에만 설정 (사용자 입력 중 방해 금지)
+        if (!document.activeElement || document.activeElement.id !== CUSTOM_PCT_IDS[name]) {
+            const pctId = CUSTOM_PCT_IDS[name];
+            const mode = info.mode || '';
+            const match = mode.match(/_custom:(\d+)$/);
+            if (match && pctId && !row.dataset.initialized) {
+                document.getElementById(pctId).value = match[1];
+                row.dataset.initialized = "true";
+            }
         }
+    }
+}
+
+function renderGap() {
+    const row = document.getElementById('row-gap');
+    if (row) {
+        row.className = 'gap-row' + (isGapModified() ? ' modified' : '');
     }
 }
 
@@ -276,6 +308,7 @@ function deleteHotkey(keyName) {
     config.shortcuts[keyName].display = '';
     renderHotkeys();
     renderCustomHotkeys();
+    renderGap();
 }
 
 function clearAll() {
@@ -286,6 +319,7 @@ function clearAll() {
     }
     renderHotkeys();
     renderCustomHotkeys();
+    renderGap();
 }
 
 async function saveConfig() {
@@ -344,9 +378,10 @@ async function saveConfig() {
         body: JSON.stringify(config)
     });
     if (res.ok) {
-        initialConfig = deepCopy(config); // 저장 성공 시 초기값 갱신
+        initialConfig = deepCopy(config); // 저장 성공 시 초기값 갱신하여 음영 제거
         renderHotkeys();
         renderCustomHotkeys();
+        renderGap();
         status.style.color = '#2ecc71';
         status.textContent = t('saveDone');
     } else {
@@ -363,10 +398,7 @@ async function resetConfig() {
     if (res.ok) {
         const data = await res.json();
         config = data.config; // 로컬 설정만 업데이트 (initialConfig는 그대로 두어 음영 발생 유도)
-        document.getElementById('gap').value = config.settings?.gap ?? 5;
-        applyLang();
-        renderHotkeys();
-        renderCustomHotkeys();
+        loadConfigUI();
         status.style.color = '#f39c12';
         status.textContent = t('resetDone') + ' (저장 버튼을 눌러야 반영됩니다)';
     } else {
