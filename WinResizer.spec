@@ -9,6 +9,7 @@ a = Analysis(
         ('app/src/ui/tray_icon.png', 'app/src/ui'),
         ('app/src/templates', 'templates'),
         ('app/src/static', 'static'),
+        ('app/src/config', 'config'),
     ],
     hiddenimports=[],
     hookspath=[],

@@ -5,9 +5,16 @@ from utils.logger import logger
 # 사용자 설정 파일 경로 (~/Library/Application Support/WinResizer/config.json)
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "WinResizer", "config.json")
 
-# 기본값 파일 경로 (앱 번들 및 일반 실행 모두 대응)
-_SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_CONFIG_FILE = os.path.join(_SRC_DIR, "config", "default-config.json")
+# 기본값 파일 경로
+# - 일반 실행: app/src/core/config_manager.py → app/src/config/default-config.json
+# - PyInstaller 번들: sys._MEIPASS(번들 루트)/config/default-config.json
+import sys as _sys
+if getattr(_sys, 'frozen', False):
+    # .app 번들 실행 시 — PyInstaller가 datas를 _MEIPASS 아래에 풀어놓음
+    _BASE = _sys._MEIPASS
+else:
+    _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_CONFIG_FILE = os.path.join(_BASE, "config", "default-config.json")
 
 _default_config_cache = None
 _config_cache = None
