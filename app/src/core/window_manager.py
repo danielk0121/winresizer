@@ -45,6 +45,23 @@ def is_accessibility_trusted():
     """
     return AXIsProcessTrusted()
 
+def is_input_monitoring_trusted():
+    """
+    현재 프로세스가 입력 모니터링(Input Monitoring) 권한을 가지고 있는지 확인합니다.
+    macOS 10.15 Catalina 이상에서 필요한 글로벌 이벤트 리스닝 권한을 체크합니다.
+    """
+    try:
+        from Quartz import CGPreflightListenEventAccess
+        # kCGHIDEventTap = 0
+        return CGPreflightListenEventAccess(0)
+    except ImportError:
+        # Quartz 라이브러리가 없거나 이전 버전인 경우, 
+        # 접근성 권한이 있으면 보통 입력 모니터링도 같이 허용되거나 필요 없음
+        return AXIsProcessTrusted()
+    except Exception as e:
+        logger.debug(f"Input monitoring check failed: {e}")
+        return False
+
 def get_active_window_object():
     """
     현재 가장 앞에 있는(Frontmost) 애플리케이션의 활성화된 윈도우 객체를 반환합니다.

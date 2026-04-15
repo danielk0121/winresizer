@@ -27,13 +27,15 @@ const LANG = {
         applyDone:    (dir, pct) => `${dir} ${pct}% 적용 완료`,
         applyFail:    '적용 실패',
         statusChecking: '권한 확인 중...',
-        statusGranted:  '접근성 권한: 승인됨',
-        statusDenied:   '접근성 권한: 필요 (클릭하여 설정 열기)',
+        statusGranted:  '모든 권한 승인됨',
+        statusPartial:  '권한 일부 필요 (클릭하여 설정)',
+        statusDenied:   '권한 설정 필요 (클릭하여 설정)',
         guideTitle:     'WinResizer 시작하기',
-        guideStep1:     '1. 아래 버튼을 클릭하여 <b>시스템 설정</b>을 엽니다. <button class="step-btn" onclick="openAccessibilitySettings()">설정 열기</button>',
-        guideStep2:     '2. 목록에서 <b>WinResizer</b>를 찾아 스위치를 켭니다.',
-        guideStep3:     '3. 설정 변경 시 <b>앱이 자동 종료</b>될 수 있으니, 종료되면 트레이에서 다시 실행해 주세요.',
-        guideBtn:       '시스템 설정 열기 (작동 안할 시 클릭)',
+        guideStep1:     '1. <b>손쉬운 사용</b> 권한을 허용해 주세요. <button class="step-btn" onclick="openAccessibilitySettings()">설정 열기</button>',
+        guideStep2:     '2. <b>입력 모니터링</b> 권한을 허용해 주세요. <button class="step-btn" onclick="openInputMonitoring()">설정 열기</button>',
+        guideStep3:     '3. 설정을 모두 마쳤다면 <b>앱을 종료 후 다시 실행</b>해 주세요.',
+        guideStep4:     '4. 모든 준비가 완료되었습니다!',
+        guideBtn:       '시스템 설정 열기',
         guideNotice:    '권한 승인 후 이 창이 자동으로 닫히지 않으면 페이지를 새로고침 하세요.',
     },
     en: {
@@ -62,14 +64,16 @@ const LANG = {
         duplicateError: (names) => `Hotkey conflict: same as ${names}. Cannot save.`,
         applyDone:    (dir, pct) => `${dir} ${pct}% applied`,
         applyFail:    'Apply failed',
-        statusChecking: 'Checking permissions...',
-        statusGranted:  'Accessibility: Granted',
-        statusDenied:   'Accessibility: Required (Click to open settings)',
+        statusChecking: 'Checking...',
+        statusGranted:  'All Permissions Granted',
+        statusPartial:  'Permissions Required (Click)',
+        statusDenied:   'Permissions Required (Click)',
         guideTitle:     'Getting Started with WinResizer',
-        guideStep1:     '1. Click the button below to open <b>System Settings</b>. <button class="step-btn" onclick="openAccessibilitySettings()">Open Settings</button>',
-        guideStep2:     '2. Find <b>WinResizer</b> in the list and turn it on.',
-        guideStep3:     '3. Settings change may <b>close the app automatically</b>. If so, restart it from the tray.',
-        guideBtn:       'Open System Settings (Fallback)',
+        guideStep1:     '1. Enable <b>Accessibility</b> permission. <button class="step-btn" onclick="openAccessibilitySettings()">Open Settings</button>',
+        guideStep2:     '2. Enable <b>Input Monitoring</b> permission. <button class="step-btn" onclick="openInputMonitoring()">Open Settings</button>',
+        guideStep3:     '3. Once done, <b>restart the app</b> for changes to take effect.',
+        guideStep4:     '4. Everything is ready!',
+        guideBtn:       'Open System Settings',
         guideNotice:    'If this window doesn\'t close after granting, please refresh the page.',
     },
 };
@@ -113,7 +117,15 @@ function applyLang() {
 }
 
 function updateGuideUI() {
-    // applyLang에서 처리되지 않는 동적 요소 보정 (필요시)
+    // 가이드 단계를 다시 렌더링하여 언어 변경 반영
+    const steps = ['guideStep1', 'guideStep2', 'guideStep3', 'guideStep4'];
+    steps.forEach((key, index) => {
+        const el = document.getElementById(`step${index + 1}`);
+        if (el) {
+            const textEl = el.querySelector('.step-text');
+            if (textEl) textEl.innerHTML = t(key);
+        }
+    });
 }
 
 // ── 커스텀 비율 키 설정 ────────────────────────────────────────
@@ -461,22 +473,55 @@ loadConfig();
 async function checkStatus() {
     const badge = document.getElementById('status-badge');
     const guide = document.getElementById('guide-overlay');
+    const mainBtn = document.getElementById('guide-main-btn');
     if (!badge) return;
 
     try {
         const res = await fetch('/api/status');
         const data = await res.json();
         
-        if (data.accessibility_granted) {
+        const acc = data.accessibility_granted;
+        const inp = data.input_monitoring_granted;
+
+        // 1단계: 손쉬운 사용
+        const step1 = document.getElementById('step1');
+        if (step1) step1.classList.toggle('completed', acc);
+
+        // 2단계: 입력 모니터링
+        const step2 = document.getElementById('step2');
+        if (step2) step2.classList.toggle('completed', inp);
+
+        // 3단계: 앱 재실행 (두 권한 모두 있고 앱이 떠있으면 안내)
+        const step3 = document.getElementById('step3');
+        if (step3) {
+            if (acc && inp) {
+                step3.style.fontWeight = 'bold';
+                step3.style.color = '#2ecc71';
+            } else {
+                step3.style.fontWeight = 'normal';
+                step3.style.color = '#ccc';
+            }
+        }
+
+        // 전체 배지 업데이트
+        if (acc && inp) {
             badge.className = 'status-badge status-granted';
             badge.innerHTML = `<span data-i18n="statusGranted">${t('statusGranted')}</span>`;
             badge.onclick = null;
             if (guide) guide.style.display = 'none';
         } else {
             badge.className = 'status-badge status-denied';
-            badge.innerHTML = `<span data-i18n="statusDenied">${t('statusDenied')}</span>`;
-            badge.onclick = openAccessibilitySettings;
-            if (guide) guide.style.display = 'flex';
+            const statusKey = (acc || inp) ? 'statusPartial' : 'statusDenied';
+            badge.innerHTML = `<span data-i18n="${statusKey}">${t(statusKey)}</span>`;
+            
+            badge.onclick = !acc ? openAccessibilitySettings : openInputMonitoring;
+            
+            if (guide) {
+                guide.style.display = 'flex';
+                if (mainBtn) {
+                    mainBtn.onclick = !acc ? openAccessibilitySettings : openInputMonitoring;
+                }
+            }
         }
     } catch (e) {
         console.error('Status check failed:', e);

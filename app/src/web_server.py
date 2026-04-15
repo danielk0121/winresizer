@@ -28,9 +28,10 @@ def create_app():
         """
         현재 애플리케이션의 상태(권한 등)를 반환합니다.
         """
-        from core.window_manager import is_accessibility_trusted
+        from core.window_manager import is_accessibility_trusted, is_input_monitoring_trusted
         return jsonify({
             "accessibility_granted": is_accessibility_trusted(),
+            "input_monitoring_granted": is_input_monitoring_trusted(),
             "pid": os.getpid()
         })
 

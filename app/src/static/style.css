@@ -93,7 +93,15 @@ h1 { font-size: 18px; color: #eee; }
 }
 .guide-title { font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #fff; text-align: center; }
 .guide-steps { margin-bottom: 24px; }
-.guide-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.guide-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; transition: all 0.3s; }
+.guide-step.completed {
+    opacity: 0.4;
+    text-decoration: line-through;
+    filter: grayscale(100%);
+}
+.guide-step.completed .step-btn {
+    display: none;
+}
 .step-num {
     background: #2980b9; color: #fff; width: 24px; height: 24px;
     border-radius: 12px; display: flex; align-items: center; justify-content: center;

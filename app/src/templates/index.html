@@ -13,17 +13,20 @@
         <div class="guide-card">
             <div class="guide-title" data-i18n="guideTitle">WinResizer 시작하기</div>
             <div class="guide-steps">
-                <div class="guide-step">
-                    <div class="step-text" data-i18n="guideStep1">1. 아래 버튼을 클릭하여 <b>시스템 설정</b>을 엽니다. <button class="step-btn" onclick="openAccessibilitySettings()">설정 열기</button></div>
+                <div id="step1" class="guide-step">
+                    <div class="step-text" data-i18n="guideStep1">1. <b>손쉬운 사용</b> 권한을 허용해 주세요. <button class="step-btn" onclick="openAccessibilitySettings()">설정 열기</button></div>
                 </div>
-                <div class="guide-step">
-                    <div class="step-text" data-i18n="guideStep2">2. 목록에서 <b>WinResizer</b>를 찾아 스위치를 켭니다.</div>
+                <div id="step2" class="guide-step">
+                    <div class="step-text" data-i18n="guideStep2">2. <b>입력 모니터링</b> 권한을 허용해 주세요. <button class="step-btn" onclick="openInputMonitoring()">설정 열기</button></div>
                 </div>
-                <div class="guide-step">
-                    <div class="step-text" data-i18n="guideStep3">3. 설정 변경 시 <b>앱이 자동 종료</b>될 수 있으니, 종료되면 트레이에서 다시 실행해 주세요.</div>
+                <div id="step3" class="guide-step">
+                    <div class="step-text" data-i18n="guideStep3">3. 설정을 모두 마쳤다면 <b>앱을 종료 후 다시 실행</b>해 주세요.</div>
+                </div>
+                <div id="step4" class="guide-step" style="display: none;">
+                    <div class="step-text" data-i18n="guideStep4">4. 모든 준비가 완료되었습니다!</div>
                 </div>
             </div>
-            <button class="guide-btn" onclick="openAccessibilitySettings()" data-i18n="guideBtn">시스템 설정 열기 (작동 안할 시 클릭)</button>
+            <button id="guide-main-btn" class="guide-btn" onclick="openAccessibilitySettings()" data-i18n="guideBtn">시스템 설정 열기</button>
             <div class="guide-notice" data-i18n="guideNotice">권한 승인 후 이 창이 자동으로 닫히지 않으면 페이지를 새로고침 하세요.</div>
         </div>
     </div>
