@@ -37,6 +37,24 @@ class TestWebServer(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         mock_save.assert_called_once()
 
+    @patch('subprocess.run')
+    def test_api_execute_special_commands(self, mock_run):
+        """특수 명령(권한 설정 열기)이 subprocess.run을 호출하는지 확인"""
+        # 1. open_accessibility
+        res = self.client.post('/api/execute',
+                               data=json.dumps({'mode': 'open_accessibility'}),
+                               content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(mock_run.called)
+        
+        # 2. open_input_monitoring
+        mock_run.reset_mock()
+        res = self.client.post('/api/execute',
+                               data=json.dumps({'mode': 'open_input_monitoring'}),
+                               content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(mock_run.called)
+
     def test_post_config_invalid_json(self):
         """POST /api/config 에 잘못된 JSON 전송 시 400 반환"""
         res = self.client.post('/api/config',

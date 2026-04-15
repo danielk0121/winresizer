@@ -23,19 +23,18 @@ def create_app():
     def index():
         return render_template('index.html')
 
-    from core.window_manager import is_accessibility_trusted
+    @app.route('/api/status', methods=['GET'])
+    def get_status():
+        """
+        현재 애플리케이션의 상태(권한 등)를 반환합니다.
+        """
+        from core.window_manager import is_accessibility_trusted
+        return jsonify({
+            "accessibility_granted": is_accessibility_trusted(),
+            "pid": os.getpid()
+        })
 
-@app.route('/api/status', methods=['GET'])
-def get_status():
-    """
-    현재 애플리케이션의 상태(권한 등)를 반환합니다.
-    """
-    return jsonify({
-        "accessibility_granted": is_accessibility_trusted(),
-        "pid": os.getpid()
-    })
-
-@app.route('/api/config', methods=['GET'])
+    @app.route('/api/config', methods=['GET'])
     def get_config():
         return jsonify(config_manager.load_config())
 
@@ -82,7 +81,7 @@ def get_status():
     def add_header(response):
         """브라우저 캐시 방지 헤더 추가"""
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
+        # response.headers['Pragma'] = 'no-cache'  # Pragma는 Flask-Internal에서 처리 가능
         response.headers['Expires'] = '0'
         return response
 

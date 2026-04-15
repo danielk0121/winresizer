@@ -8,6 +8,29 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <!-- 권한 안내 가이드 오버레이 -->
+    <div id="guide-overlay" class="guide-overlay" style="display: none;">
+        <div class="guide-card">
+            <div class="guide-title" data-i18n="guideTitle">WinResizer 시작하기</div>
+            <div class="guide-steps">
+                <div class="guide-step">
+                    <div class="step-num">1</div>
+                    <div class="step-text" data-i18n="guideStep1"><b>[손쉬운 사용]</b> 목록에서 <b>WinResizer</b>를 체크합니다. <button class="step-btn" onclick="openAccessibilitySettings()">설정 열기</button></div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">2</div>
+                    <div class="step-text" data-i18n="guideStep2"><b>[입력 모니터링]</b> 목록에도 <b>WinResizer</b>를 체크합니다. <button class="step-btn" onclick="openInputMonitoring()">설정 열기</button></div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">3</div>
+                    <div class="step-text" data-i18n="guideStep3">권한을 준 뒤, <b>앱을 종료하고 다시 실행</b>해야 설정이 완료됩니다.</div>
+                </div>
+            </div>
+            <button class="guide-btn" onclick="location.reload()" data-i18n="guideBtn">권한 설정 완료 (새로고침)</button>
+            <div class="guide-notice" data-i18n="guideNotice">권한 승인 후 이 창이 자동으로 닫히지 않으면 페이지를 새로고침 하세요.</div>
+        </div>
+    </div>
+
     <!-- 헤더: 제목 + 언어 전환 버튼 -->
     <div class="header">
         <h1 data-i18n="title">WinResizer 설정</h1>

@@ -26,6 +26,15 @@ const LANG = {
         duplicateError: (names) => `단축키 충돌: ${names} 와(과) 동일한 단축키입니다. 저장할 수 없습니다.`,
         applyDone:    (dir, pct) => `${dir} ${pct}% 적용 완료`,
         applyFail:    '적용 실패',
+        statusChecking: '권한 확인 중...',
+        statusGranted:  '접근성 권한: 승인됨',
+        statusDenied:   '접근성 권한: 필요 (클릭하여 설정 열기)',
+        guideTitle:     'WinResizer 시작하기',
+        guideStep1:     '아래 버튼을 클릭하여 <b>시스템 설정</b>을 엽니다.',
+        guideStep2:     '목록에서 <b>WinResizer</b>를 찾아 스위치를 켭니다.',
+        guideStep3:     '설정 변경 시 <b>앱이 자동 종료</b>될 수 있으니, 종료되면 트레이에서 다시 실행해 주세요.',
+        guideBtn:       '시스템 설정 열기',
+        guideNotice:    '권한 승인 후 이 창이 자동으로 닫히지 않으면 페이지를 새로고침 하세요.',
     },
     en: {
         title:        'WinResizer Settings',
@@ -53,6 +62,15 @@ const LANG = {
         duplicateError: (names) => `Hotkey conflict: same as ${names}. Cannot save.`,
         applyDone:    (dir, pct) => `${dir} ${pct}% applied`,
         applyFail:    'Apply failed',
+        statusChecking: 'Checking permissions...',
+        statusGranted:  'Accessibility: Granted',
+        statusDenied:   'Accessibility: Required (Click to open settings)',
+        guideTitle:     'Getting Started with WinResizer',
+        guideStep1:     'Click the button below to open <b>System Settings</b>.',
+        guideStep2:     'Find <b>WinResizer</b> in the list and turn it on.',
+        guideStep3:     'Settings change may <b>close the app automatically</b>. If so, restart it from the tray.',
+        guideBtn:       'Open System Settings',
+        guideNotice:    'If this window doesn\'t close after granting, please refresh the page.',
     },
 };
 
@@ -67,6 +85,8 @@ function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('lang', lang);
     applyLang();
+    // 가이드 내부 HTML은 <b> 태그 등이 포함될 수 있어 innerHTML로 처리
+    updateGuideUI();
     // 단축키 버튼 텍스트 갱신 (녹화 중이 아닌 버튼만)
     renderHotkeys();
     renderCustomHotkeys();
@@ -77,7 +97,12 @@ function applyLang() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (LANG[currentLang][key] !== undefined) {
-            el.textContent = t(key);
+            // 가이드 단계나 강조 문구 등 HTML이 포함된 경우 innerHTML 사용
+            if (key.startsWith('guideStep')) {
+                el.innerHTML = t(key);
+            } else {
+                el.textContent = t(key);
+            }
         }
     });
     // 언어 버튼 활성화 표시
@@ -85,6 +110,10 @@ function applyLang() {
     document.getElementById('lang-en').classList.toggle('active', currentLang === 'en');
     // html lang 속성 갱신
     document.documentElement.lang = currentLang;
+}
+
+function updateGuideUI() {
+    // applyLang에서 처리되지 않는 동적 요소 보정 (필요시)
 }
 
 // ── 커스텀 비율 키 설정 ────────────────────────────────────────
@@ -427,3 +456,69 @@ async function resetConfig() {
 }
 
 loadConfig();
+
+// ── 상태 체크 ──────────────────────────────────────────────────
+async function checkStatus() {
+    const badge = document.getElementById('status-badge');
+    const guide = document.getElementById('guide-overlay');
+    if (!badge) return;
+
+    try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        
+        if (data.accessibility_granted) {
+            badge.className = 'status-badge status-granted';
+            badge.innerHTML = `<span data-i18n="statusGranted">${t('statusGranted')}</span>`;
+            badge.onclick = null;
+            if (guide) guide.style.display = 'none';
+        } else {
+            badge.className = 'status-badge status-denied';
+            badge.innerHTML = `<span data-i18n="statusDenied">${t('statusDenied')}</span>`;
+            badge.onclick = openAccessibilitySettings;
+            if (guide) guide.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error('Status check failed:', e);
+    }
+}
+
+async function openAccessibilitySettings() {
+    console.log('Requesting to open accessibility settings...');
+    try {
+        const res = await fetch('/api/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: 'open_accessibility' })
+        });
+        if (res.ok) {
+            console.log('Accessibility settings request successful');
+        } else {
+            console.error('Failed to open accessibility settings:', await res.text());
+        }
+    } catch (e) {
+        console.error('Error calling /api/execute:', e);
+    }
+}
+
+async function openInputMonitoring() {
+    console.log('Requesting to open input monitoring settings...');
+    try {
+        const res = await fetch('/api/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: 'open_input_monitoring' })
+        });
+        if (res.ok) {
+            console.log('Input monitoring settings request successful');
+        } else {
+            console.error('Failed to open input monitoring settings:', await res.text());
+        }
+    } catch (e) {
+        console.error('Error calling /api/execute:', e);
+    }
+}
+
+// 5초마다 권한 상태 체크
+setInterval(checkStatus, 5000);
+setTimeout(checkStatus, 500); // 로드 직후 한 번 실행

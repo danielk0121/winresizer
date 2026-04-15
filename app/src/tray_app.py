@@ -51,8 +51,8 @@ class TrayApp(rumps.App):
 
     def _check_permissions(self):
         if not ApplicationServices.AXIsProcessTrusted():
-            logger.warning("손쉬운 사용 권한 없음. 시스템 설정으로 이동합니다.")
-            subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
+            logger.warning("손쉬운 사용 권한 없음. 설정에서 권한을 허용해 주세요.")
+            # 알림이나 자동 오픈을 제거하여 사용자 방해를 최소화함
 
     def open_settings(self, _):
         """브라우저로 설정 페이지 오픈"""

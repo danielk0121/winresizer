@@ -43,41 +43,89 @@ def execute_window_command(mode):
     try:
         logger.debug(f"Executing window command: {mode}")
         
-        # 1. 권한 확인
+        # 설정 로드 (Gap 정보 등 필요)
+        config = config_manager.load_config()
+        gap = config.get('settings', {}).get('gap', 0)
+
+        # 1. 특수 명령 처리 (권한 없이도 실행 가능해야 함)
+        if mode == "open_accessibility":
+            import subprocess
+            logger.info("Opening accessibility settings...")
+            
+            # 1. open URL 방식 (최신 macOS에서 선호됨)
+            urls = [
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+                "x-apple.systempreferences:com.apple.Settings.Privacy-Security.extension?Privacy_Accessibility",
+                "x-apple.systempreferences:com.apple.Accessibility-Settings.extension",
+                "/System/Library/PreferencePanes/Security.prefPane"
+            ]
+            for url in urls:
+                try:
+                    subprocess.run(["open", url], check=True, capture_output=True)
+                    logger.info(f"Successfully called open for: {url}")
+                    return
+                except Exception as e:
+                    logger.debug(f"Failed to open {url}: {e}")
+
+            # 2. AppleScript 방식 (Fallback)
+            scripts = [
+                'tell application "System Settings" to reveal anchor "Privacy_Accessibility" of pane id "com.apple.Settings.Privacy-Security.extension"',
+                'tell application "System Settings" to reveal anchor "Privacy_Accessibility" of pane id "com.apple.preference.security"',
+                'tell application "System Preferences" to reveal anchor "Privacy_Accessibility" of pane id "com.apple.preference.security"',
+                'activate application "System Settings"\ntell application "System Events" to tell process "System Settings" to click menu item "Privacy & Security" of menu "View" of menu bar 1'
+            ]
+            for script in scripts:
+                try:
+                    subprocess.run(["osascript", "-e", script], check=True, capture_output=True)
+                    logger.info("Successfully opened accessibility settings via AppleScript")
+                    return
+                except Exception: continue
+            return
+
+        if mode == "open_input_monitoring":
+            import subprocess
+            logger.info("Opening input monitoring settings...")
+            
+            # 1. open URL 방식
+            urls = [
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring",
+                "x-apple.systempreferences:com.apple.Settings.Privacy-Security.extension?Privacy_ListenEvent"
+            ]
+            for url in urls:
+                try:
+                    subprocess.run(["open", url], check=True, capture_output=True)
+                    logger.info(f"Successfully called open for: {url}")
+                    return
+                except Exception as e:
+                    logger.debug(f"Failed to open {url}: {e}")
+
+            # 2. AppleScript 방식 (Fallback)
+            scripts = [
+                'tell application "System Settings" to reveal anchor "Privacy_ListenEvent" of pane id "com.apple.Settings.Privacy-Security.extension"',
+                'tell application "System Settings" to reveal anchor "Privacy_ListenEvent" of pane id "com.apple.preference.security"',
+                'tell application "System Preferences" to reveal anchor "Privacy_ListenEvent" of pane id "com.apple.preference.security"'
+            ]
+            for script in scripts:
+                try:
+                    subprocess.run(["osascript", "-e", script], check=True, capture_output=True)
+                    logger.info("Successfully opened input monitoring settings via AppleScript")
+                    return
+                except Exception: continue
+            return
+
+        # 2. 권한 확인
         if not is_accessibility_trusted():
             logger.warning("macOS Accessibility permission is not granted.")
             return
 
-        # 2. 활성 앱 및 윈도우 가져오기
+        # 3. 활성 앱 및 윈도우 가져오기
         active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
-        if not active_app:
-            logger.debug("Active application not found")
-            return
-            
-        app_name = active_app.localizedName()
-        config = config_manager.get_config()
-        settings = config.get('settings', {})
-        
-        if app_name in settings.get('ignore_apps', []):
-            logger.debug(f"Ignoring app: {app_name}")
-            return
-            
         target_window = get_active_window_object()
-        if not target_window:
-            logger.debug("Active window object not found")
-            return
-            
         current_bounds = get_window_bounds(target_window)
-        if not current_bounds:
-            logger.debug("Failed to get window bounds")
-            return
-            
-        gap = settings.get('gap', 5)
         
-        # 3. 명령 처리
-        if mode == "open_accessibility":
-            import subprocess
-            subprocess.run(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"])
+        if not target_window or not current_bounds:
+            logger.warning("No active window found.")
             return
 
         if mode == "복구" or mode == "restore":
